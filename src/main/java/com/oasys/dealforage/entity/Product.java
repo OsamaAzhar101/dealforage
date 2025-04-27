@@ -4,13 +4,13 @@ public class Product {
 
     private String asin;
     private byte[] image;
-    private long newprice;
-    private long pricedifference;
-    private long dealscore;
+    private String newprice;
+    private String pricedifference;
+    private String dealscore;
     private String rootcat;
-    private int savingspercent;
+    private String savingspercent;
     private String title;
-    private long usedprice;
+    private String usedprice;
     private String updated_at;
 
     private String lastchange;
@@ -35,27 +35,27 @@ public class Product {
         this.image = image;
     }
 
-    public long getNewprice() {
+    public String getNewprice() {
         return newprice;
     }
 
-    public void setNewprice(long newprice) {
+    public void setNewprice(String newprice) {
         this.newprice = newprice;
     }
 
-    public long getPricedifference() {
+    public String getPricedifference() {
         return pricedifference;
     }
 
-    public void setPricedifference(long pricedifference) {
+    public void setPricedifference(String pricedifference) {
         this.pricedifference = pricedifference;
     }
 
-    public long getDealscore() {
+    public String getDealscore() {
         return dealscore;
     }
 
-    public void setDealscore(long dealscore) {
+    public void setDealscore(String dealscore) {
         this.dealscore = dealscore;
     }
 
@@ -67,11 +67,11 @@ public class Product {
         this.rootcat = rootcat;
     }
 
-    public int getSavingspercent() {
+    public String getSavingspercent() {
         return savingspercent;
     }
 
-    public void setSavingspercent(int savingspercent) {
+    public void setSavingspercent(String savingspercent) {
         this.savingspercent = savingspercent;
     }
 
@@ -83,11 +83,11 @@ public class Product {
         this.title = title;
     }
 
-    public long getUsedprice() {
+    public String getUsedprice() {
         return usedprice;
     }
 
-    public void setUsedprice(long usedprice) {
+    public void setUsedprice(String usedprice) {
         this.usedprice = usedprice;
     }
 
@@ -123,6 +123,23 @@ public class Product {
         this.source = source;
     }
 
-
+    @Override
+    public String toString() {
+        return "Product{" +
+                "asin='" + asin + '\'' +
+                ", image=" + (image != null ? "[binary data]" : "null") +
+                ", newprice=" + newprice +
+                ", pricedifference=" + pricedifference +
+                ", dealscore=" + dealscore +
+                ", rootcat='" + rootcat + '\'' +
+                ", savingspercent=" + savingspercent +
+                ", title='" + title + '\'' +
+                ", usedprice=" + usedprice +
+                ", updated_at='" + updated_at + '\'' +
+                ", lastchange='" + lastchange + '\'' +
+                ", lastupdate='" + lastupdate + '\'' +
+                ", source=" + source +
+                '}';
+    }
 
 }
