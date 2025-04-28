@@ -4,7 +4,7 @@ import com.oasys.dealforage.entity.Product;
 import com.oasys.dealforage.service.ProductService;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.notification.Notification;
@@ -13,6 +13,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -20,68 +21,73 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Route("")
 public class MainView extends VerticalLayout {
 
-    private static final List<String> CATEGORIES = List.of(
-            "All", "Appliances", "Arts, Crafts & Sewing", "Auto Parts & Accessories",
-            "Baby", "Beauty & Personal Care", "Cell Phones & Accessories",
-            "Clothing, Shoes, & Jewelry", "Electronics", "Garden & Outdoor",
-            "Health & Household", "Home & Kitchen", "Industrial & Scientific",
-            "Musical Instruments", "Movies & TV", "Office Products",
-            "Pet Supplies", "Sports & Outdoors", "Tools & Home Improvement",
-            "Toys & Games", "Video Games", "Vinyl", "Other"
-    );
+    private static final Map<String, Integer> CATEGORY_INDEX = new HashMap<>();
+
+    static {
+        CATEGORY_INDEX.put("All", 0);
+        CATEGORY_INDEX.put("Appliances", 1);
+        CATEGORY_INDEX.put("Arts, Crafts & Sewing", 2);
+        CATEGORY_INDEX.put("Auto Parts & Accessories", 3);
+        CATEGORY_INDEX.put("Baby", 4);
+        CATEGORY_INDEX.put("Beauty & Personal Care", 5);
+        CATEGORY_INDEX.put("Cell Phones & Accessories", 6);
+        CATEGORY_INDEX.put("Clothing, Shoes, & Jewelry", 7);
+        CATEGORY_INDEX.put("Electronics", 8);
+        CATEGORY_INDEX.put("Garden & Outdoor", 9);
+        CATEGORY_INDEX.put("Health & Household", 10);
+        CATEGORY_INDEX.put("Home & Kitchen", 11);
+        CATEGORY_INDEX.put("Industrial & Scientific", 12);
+        CATEGORY_INDEX.put("Musical Instruments", 13);
+        CATEGORY_INDEX.put("Movies & TV", 14);
+        CATEGORY_INDEX.put("Office Products", 15);
+        CATEGORY_INDEX.put("Pet Supplies", 16);
+        CATEGORY_INDEX.put("Sports & Outdoors", 17);
+        CATEGORY_INDEX.put("Tools & Home Improvement", 18);
+        CATEGORY_INDEX.put("Toys & Games", 19);
+        CATEGORY_INDEX.put("Video Games", 20);
+        CATEGORY_INDEX.put("Vinyl", 21);
+        CATEGORY_INDEX.put("Other", 22);
+    }
 
     private final ProductService productService;
     private final Grid<Product> productGrid = new Grid<>(Product.class);
     private final List<Product> productList = new ArrayList<>();
-
-    private final ComboBox<String> categoryFilter = new ComboBox<>("Select Category");
-
-    private Product lastProduct; // To store the last product details for pagination
+    private final MultiSelectComboBox<String> categoryFilter = new MultiSelectComboBox<>("Select Categories");
+    private Product lastProduct;
 
     public MainView(ProductService productService) {
-
-        categoryFilter.setItems(CATEGORIES);
-        categoryFilter.setValue("All"); // Default value
-
-// Add a listener if you want to filter based on selected category
-        categoryFilter.addValueChangeListener(event -> {
-            String selectedCategory = event.getValue();
-            Notification.show("Selected category: " + selectedCategory);
-            // Later: apply filtering logic here if you need
-        });
-
-// Add it to the layout
-        add(categoryFilter);
-
-
         this.productService = productService;
         setSizeFull();
         configureGrid();
-        add(productGrid);
+        add(createFilterLayout(), productGrid, createButtonLayout());
+        loadInitialData();
+    }
 
+    private HorizontalLayout createFilterLayout() {
+        categoryFilter.setItems(CATEGORY_INDEX.keySet());
+        categoryFilter.setValue(Set.of("All"));
+        categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
 
-        // Add Next Page Button
+        Button searchButton = new Button("Search", e -> searchProducts());
+
+        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, searchButton);
+        filterLayout.setAlignItems(Alignment.END);
+        return filterLayout;
+    }
+
+    private HorizontalLayout createButtonLayout() {
         Button nextPageButton = new Button("Load More Data", e -> loadNextPage());
-
-
         Button exportButton = new Button("Export Selected to CSV", e -> exportSelectedProducts());
 
-        // Center buttons in a HorizontalLayout
         HorizontalLayout buttonLayout = new HorizontalLayout(nextPageButton, exportButton);
         buttonLayout.setWidthFull();
         buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-        add(buttonLayout);
-
-
-
-        loadInitialData();
+        return buttonLayout;
     }
 
     private void configureGrid() {
@@ -93,20 +99,9 @@ public class MainView extends VerticalLayout {
     private void loadInitialData() {
         List<Product> products = productService.fetchInitialProducts();
 
-        System.out.println( "Initial products loaded: " + products.size());
-        System.out.println( "Last product: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getAsin()));
-        System.out.println( "Last product price: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getNewprice()));
-        System.out.println( "Last product savings: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getSavingspercent()));
-        System.out.println( "Last product deal score: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getDealscore()));
-        System.out.println( "Last product used price: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getUsedprice()));
-        System.out.println( "Last product updated at: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getUpdated_at()));
-        System.out.println( "Last product last change: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getLastchange()));
-        System.out.println( "Last product last update: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getLastupdate()));
-        System.out.println( "Last product source: " + (products.isEmpty() ? "None" : products.get(products.size() -1).getSource()));
-
         if (!products.isEmpty()) {
             productList.addAll(products);
-            lastProduct = products.get(products.size() - 1); // Store the last product
+            lastProduct = products.get(products.size() - 1);
         }
         productGrid.setItems(productList);
     }
@@ -117,7 +112,6 @@ public class MainView extends VerticalLayout {
             return;
         }
 
-        // Fetch the next set of products using the last product's details
         List<Product> products = productService.fetchNextProducts(
                 lastProduct.getAsin(),
                 lastProduct.getPricedifference(),
@@ -129,14 +123,12 @@ public class MainView extends VerticalLayout {
 
         if (!products.isEmpty()) {
             productList.addAll(products);
-            lastProduct = products.get(products.size() - 1); // Update the last product
+            lastProduct = products.get(products.size() - 1);
             productGrid.getDataProvider().refreshAll();
         } else {
             Notification.show("No more products to load.");
         }
     }
-
-
 
     private void exportSelectedProducts() {
         Set<Product> selectedProducts = productGrid.getSelectedItems();
@@ -166,28 +158,21 @@ public class MainView extends VerticalLayout {
             byte[] csvData = writer.toString().getBytes(StandardCharsets.UTF_8);
             StreamResource resource = new StreamResource("selected_products.csv", () -> new ByteArrayInputStream(csvData));
 
-            // Remove any existing download link
             getChildren()
                     .filter(component -> component instanceof Anchor)
                     .forEach(this::remove);
 
-            // Add the new download link
             Anchor downloadLink = new Anchor(resource, "Download CSV");
             downloadLink.getElement().setAttribute("download", true);
-
-            // Add JavaScript to notify when the file is downloaded
             downloadLink.getElement().executeJs(
                     "this.addEventListener('click', () => $0.$server.notifyDownloadComplete());",
                     getElement()
             );
 
-
-            // Center the download link
             HorizontalLayout downloadLayout = new HorizontalLayout(downloadLink);
             downloadLayout.setWidthFull();
             downloadLayout.setJustifyContentMode(JustifyContentMode.CENTER);
             add(downloadLayout);
-
 
         } catch (IOException e) {
             Notification.show("Error generating CSV: " + e.getMessage());
@@ -199,5 +184,45 @@ public class MainView extends VerticalLayout {
         Notification notification = Notification.show("File download started.");
         notification.setPosition(Notification.Position.MIDDLE);
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+
+    private void searchProducts() {
+        Set<String> selectedCategories = categoryFilter.getValue();
+
+        if (selectedCategories == null || selectedCategories.isEmpty()) {
+            Notification.show("Please select at least one category.");
+            return;
+        }
+
+        String categoriesBinary = convertCategoriesToBackendFormat(selectedCategories);
+
+        categoriesBinary = categoriesBinary.substring(1);
+        Map<String, String> filters = new HashMap<>();
+        filters.put("cat", categoriesBinary);
+
+        List<Product> filteredProducts = productService.fetchProductsWithFilters(filters);
+
+        productList.clear();
+        productList.addAll(filteredProducts);
+        productGrid.setItems(productList);
+
+        if (!filteredProducts.isEmpty()) {
+            lastProduct = filteredProducts.get(filteredProducts.size() - 1);
+        } else {
+            lastProduct = null;
+        }
+    }
+
+    private String convertCategoriesToBackendFormat(Set<String> selectedCategories) {
+        StringBuilder sb = new StringBuilder("00000000000000000000000");
+
+        for (String category : selectedCategories) {
+            Integer index = CATEGORY_INDEX.get(category);
+            if (index != null) {
+                sb.setCharAt(index, '1');
+            }
+        }
+
+        return sb.toString();
     }
 }
