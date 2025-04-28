@@ -32,6 +32,7 @@ public class ProductService {
 
     public List<Product> fetchInitialProducts() {
         String url = "https://dealforager.com/api/products";
+        System.out.println("Fetching initial products with URL: " + url);
         ResponseEntity<Product[]> response = restTemplate.getForEntity(url, Product[].class);
         List<Product> products = Arrays.asList(response.getBody());
         updateCursor(products);
@@ -39,23 +40,37 @@ public class ProductService {
     }
 
     public List<Product> fetchNextProducts(String asin, String priceDifference, String savingspercent,
-                                           String dealScore, String usedPrice,
-                                           String lastupdate) {
+                                           String dealScore, String usedPrice, String lastupdate,
+                                           String categoriesBinary, String SelectedSortBy) {
 
-        System.out.println("Fetching products with ASIN: " + asin);
-        System.out.println("Price Difference: " + priceDifference);
-        System.out.println("Savings Percent: " + savingspercent);
-        System.out.println("Deal Score: " + dealScore);
-        System.out.println("Used Price: " + usedPrice);
-        System.out.println("LastChange At: " + lastupdate);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl("https://dealforager.com/api/products")
+                .queryParam("a", asin)
+                .queryParam("p", priceDifference)
+                .queryParam("s", savingspercent)
+                .queryParam("d", dealScore)
+                .queryParam("u", usedPrice)
+                .queryParam("l", lastupdate);
 
-        String url = String.format("https://dealforager.com/api/products?a=%s&p=%s&s=%s&d=%s&u=%s&l=%s",
-                asin, priceDifference, savingspercent, dealScore, usedPrice, lastupdate);
+        if (categoriesBinary != null) {
+            builder.queryParam("cat", categoriesBinary)
+                    .queryParam("domain", "1");
 
+        }
+
+        if (SelectedSortBy != null) {
+            builder.queryParam("sort", SelectedSortBy);
+        }
+        else {
+            builder.queryParam("sort", "0");
+        }
+
+        String url = builder.toUriString();
+
+
+        System.out.println("Fetching next products with URL: " + url);
         ResponseEntity<Product[]> response = restTemplate.getForEntity(url, Product[].class);
         return Arrays.asList(response.getBody());
     }
-
 
     private void updateCursor(List<Product> products) {
         if (!products.isEmpty()) {
@@ -78,6 +93,13 @@ public class ProductService {
 
     public List<Product> fetchProductsWithFilters(Map<String, String> filters) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BASE_URL);
+
+        // Add default parameters
+        builder.queryParam("domain", "1");
+        if ((filters != null || !filters.isEmpty())
+                && (filters.get("sort") == null || filters.get("sort").isEmpty())) {
+            builder.queryParam("sort", "0");
+        }
 
         if (filters != null) {
             for (Map.Entry<String, String> entry : filters.entrySet()) {

@@ -27,6 +27,8 @@ import java.util.*;
 public class MainView extends VerticalLayout {
 
     private static final Map<String, Integer> CATEGORY_INDEX = new HashMap<>();
+    private static final Map<String, Integer> SORT_BY_INDEX = new LinkedHashMap<>();
+
 
     static {
         CATEGORY_INDEX.put("All", 0);
@@ -52,12 +54,21 @@ public class MainView extends VerticalLayout {
         CATEGORY_INDEX.put("Video Games", 20);
         CATEGORY_INDEX.put("Vinyl", 21);
         CATEGORY_INDEX.put("Other", 22);
+
+        SORT_BY_INDEX.put("Deal Rating", 0);
+        SORT_BY_INDEX.put("Estimated Savings", 1);
+        SORT_BY_INDEX.put("Estimated Price Difference", 2);
+        SORT_BY_INDEX.put("Price", 3);
+        SORT_BY_INDEX.put("Most Recent Change", 4);
     }
 
     private final ProductService productService;
     private final Grid<Product> productGrid = new Grid<>(Product.class);
     private final List<Product> productList = new ArrayList<>();
     private final MultiSelectComboBox<String> categoryFilter = new MultiSelectComboBox<>("Select Categories");
+
+    private final com.vaadin.flow.component.combobox.ComboBox<String> sortByFilter = new com.vaadin.flow.component.combobox.ComboBox<>("Sort By");
+
     private Product lastProduct;
 
     public MainView(ProductService productService) {
@@ -70,12 +81,17 @@ public class MainView extends VerticalLayout {
 
     private HorizontalLayout createFilterLayout() {
         categoryFilter.setItems(CATEGORY_INDEX.keySet());
-        categoryFilter.setValue(Set.of("All"));
+
         categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+
+        sortByFilter.setItems(SORT_BY_INDEX.keySet());
+        sortByFilter.setPlaceholder("Select Sort By");
+        sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+
 
         Button searchButton = new Button("Search", e -> searchProducts());
 
-        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, searchButton);
+        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter, searchButton);
         filterLayout.setAlignItems(Alignment.END);
         return filterLayout;
     }
@@ -112,13 +128,31 @@ public class MainView extends VerticalLayout {
             return;
         }
 
+        // Check if filters are applied
+        Set<String> selectedCategories = categoryFilter.getValue();
+        String categoriesBinary = null;
+
+        if (selectedCategories != null && !selectedCategories.isEmpty()) {
+            categoriesBinary = convertCategoriesToBackendFormat(selectedCategories).substring(1);
+        }
+
+
+        String SelectedSortBy = SORT_BY_INDEX.containsKey(sortByFilter.getValue())
+                ? SORT_BY_INDEX.get(sortByFilter.getValue()).toString()
+                : null;
+
+
+//        String SelectedSortBy = sortByFilter.getItems().stream().skip(index).findFirst().orElse(null);
+        // Fetch the next set of products with filters (if any)
         List<Product> products = productService.fetchNextProducts(
                 lastProduct.getAsin(),
                 lastProduct.getPricedifference(),
                 lastProduct.getSavingspercent(),
                 lastProduct.getDealscore(),
                 lastProduct.getUsedprice(),
-                lastProduct.getLastchange()
+                lastProduct.getLastchange(),
+                categoriesBinary, // Pass the filter,
+                SelectedSortBy
         );
 
         if (!products.isEmpty()) {
@@ -187,18 +221,29 @@ public class MainView extends VerticalLayout {
     }
 
     private void searchProducts() {
+        Map<String, String> filters = new HashMap<>();
+        String selectedSortBy = sortByFilter.getValue();
         Set<String> selectedCategories = categoryFilter.getValue();
 
-        if (selectedCategories == null || selectedCategories.isEmpty()) {
-            Notification.show("Please select at least one category.");
+        if ((selectedCategories == null || selectedCategories.isEmpty())
+                && (selectedSortBy == null || selectedSortBy.isEmpty())) {
+            Notification.show("Please select at least one category or sort option.");
             return;
         }
 
-        String categoriesBinary = convertCategoriesToBackendFormat(selectedCategories);
 
-        categoriesBinary = categoriesBinary.substring(1);
-        Map<String, String> filters = new HashMap<>();
-        filters.put("cat", categoriesBinary);
+        if (selectedSortBy != null) {
+            Integer sortIndex = SORT_BY_INDEX.get(selectedSortBy);
+            filters.put("sort", sortIndex.toString());
+        }
+
+        if ((selectedCategories != null || !selectedCategories.isEmpty())) {
+            String categoriesBinary = convertCategoriesToBackendFormat(selectedCategories);
+            categoriesBinary = categoriesBinary.substring(1);
+
+            filters.put("cat", categoriesBinary);
+        }
+
 
         List<Product> filteredProducts = productService.fetchProductsWithFilters(filters);
 
@@ -213,8 +258,16 @@ public class MainView extends VerticalLayout {
         }
     }
 
+
     private String convertCategoriesToBackendFormat(Set<String> selectedCategories) {
         StringBuilder sb = new StringBuilder("00000000000000000000000");
+
+        if (selectedCategories.contains("All")) {
+            for (int i = 0; i < sb.length(); i++) {
+                sb.setCharAt(i, '1');
+            }
+            return sb.toString();
+        }
 
         for (String category : selectedCategories) {
             Integer index = CATEGORY_INDEX.get(category);
