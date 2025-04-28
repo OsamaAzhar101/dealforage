@@ -108,7 +108,22 @@ public class MainView extends VerticalLayout {
 
     private void configureGrid() {
         productGrid.setSizeFull();
+
+        // Set predefined columns first
         productGrid.setColumns("asin", "title", "newprice", "usedprice", "savingspercent");
+        // Add a custom column for the product image
+        productGrid.addComponentColumn(product -> {
+            if (product.getProcessedImage() != null) {
+                com.vaadin.flow.component.html.Image image = new com.vaadin.flow.component.html.Image(product.getProcessedImage(), "Product Image");
+                image.setWidth("100px");
+                image.setHeight("100px");
+                return image;
+            } else {
+                return new com.vaadin.flow.component.html.Span("No Image");
+            }
+        }).setHeader("Image").setAutoWidth(true);
+
+
         productGrid.setSelectionMode(Grid.SelectionMode.MULTI);
     }
 
