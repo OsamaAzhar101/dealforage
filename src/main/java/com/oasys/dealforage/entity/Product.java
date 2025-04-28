@@ -17,7 +17,15 @@ public class Product {
     private String lastupdate;
     private int source;
 
+    private String processedImage;
 
+    public String getProcessedImage() {
+        return processedImage;
+    }
+
+    public void setProcessedImage(String processedImage) {
+        this.processedImage = processedImage;
+    }
 
     public String getAsin() {
         return asin;

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,19 @@ public class ProductService {
     public List<Product> fetchInitialProducts() {
         String url = "https://dealforager.com/api/products";
         System.out.println("Fetching initial products with URL: " + url);
+
         ResponseEntity<Product[]> response = restTemplate.getForEntity(url, Product[].class);
         List<Product> products = Arrays.asList(response.getBody());
+
+        // Process the image field and map it to processedImage
+        for (Product product : products) {
+            if (product.getImage() != null) {
+
+                product.setProcessedImage(getIntegerArrayToString(product.getImage()));
+                System.out.println("Processing image for product: " + product.getProcessedImage());
+            }
+        }
+
         updateCursor(products);
         return products;
     }
@@ -59,8 +71,7 @@ public class ProductService {
 
         if (SelectedSortBy != null) {
             builder.queryParam("sort", SelectedSortBy);
-        }
-        else {
+        } else {
             builder.queryParam("sort", "0");
         }
 
@@ -69,7 +80,21 @@ public class ProductService {
 
         System.out.println("Fetching next products with URL: " + url);
         ResponseEntity<Product[]> response = restTemplate.getForEntity(url, Product[].class);
-        return Arrays.asList(response.getBody());
+
+        List<Product> products = Arrays.asList(response.getBody());
+
+        // Process the image field and map it to processedImage
+        for (Product product : products) {
+            if (product.getImage() != null) {
+                product.setProcessedImage(getIntegerArrayToString(product.getImage()));
+                System.out.println("Processing image for product: " + product.getProcessedImage());
+            }
+        }
+
+
+//        return Arrays.asList(response.getBody());
+
+        return products;
     }
 
     private void updateCursor(List<Product> products) {
@@ -113,8 +138,25 @@ public class ProductService {
         System.out.println("Fetching products with URL: " + urlWithParams);
 
         ResponseEntity<Product[]> response = restTemplate.getForEntity(urlWithParams, Product[].class);
-        return Arrays.asList(response.getBody());
+
+        List<Product> products = Arrays.asList(response.getBody());
+        // Process the image field and map it to processedImage
+        for (Product product : products) {
+            if (product.getImage() != null) {
+                product.setProcessedImage(getIntegerArrayToString(product.getImage()));
+                System.out.println("Processing image for product: " + product.getProcessedImage());
+            }
+        }
+        return products;
     }
 
 
+    public String getIntegerArrayToString(byte[] imageArray) {
+        String imageName = new String(imageArray, StandardCharsets.UTF_8);
+        if (imageName != null && imageName.length() > 0) {
+            imageName = imageName.replaceAll("SL500", "SL100");
+            imageName = "https://c.media-amazon.com/images/I/" + imageName;
+        }
+        return imageName;
+    }
 }
