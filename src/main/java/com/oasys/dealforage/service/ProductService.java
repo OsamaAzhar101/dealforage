@@ -109,11 +109,7 @@ public class ProductService {
                     if (entry.getKey().equals("minSavings")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
-                    } else {
-                        builder.queryParam(entry.getKey(), entry.getValue());
-                    }
-
-                    if (entry.getKey().equals("minDifference")) {
+                    } else if (entry.getKey().equals("minDifference")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
                     } else {
@@ -177,12 +173,12 @@ public class ProductService {
                                String estimatedSavings, String estimatedPriceDifference) {
 
 
-        if(estimatedSavings != null && !estimatedSavings.isEmpty()){
+        if (estimatedSavings != null && !estimatedSavings.isEmpty()) {
             builder.queryParam("minSavings", estimatedSavings.contains(".0")
                     ? estimatedSavings.replaceAll(".0", "") : estimatedSavings);
         }
 
-        if(estimatedPriceDifference != null && !estimatedPriceDifference.isEmpty()){
+        if (estimatedPriceDifference != null && !estimatedPriceDifference.isEmpty()) {
             builder.queryParam("minDifference", estimatedPriceDifference.contains(".0")
                     ? estimatedPriceDifference.replaceAll(".0", "") : estimatedPriceDifference);
         }
@@ -200,7 +196,7 @@ public class ProductService {
         if (categoriesBinary != null
                 || SelectedSortBy != null
                 || estimatedSavings != null
-        || estimatedPriceDifference != null) {
+                || estimatedPriceDifference != null) {
 
 
             if (categoriesBinary == null) {
@@ -212,11 +208,10 @@ public class ProductService {
 
             }
 
-            if(SelectedSortBy == null) {
+            if (SelectedSortBy == null) {
                 builder.queryParam("sort", "0");
-            }
-            else {
-             builder.queryParam("sort", SelectedSortBy);
+            } else {
+                builder.queryParam("sort", SelectedSortBy);
             }
 
 
