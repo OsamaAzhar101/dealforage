@@ -7,10 +7,12 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
+
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -66,10 +68,64 @@ public class MainView extends VerticalLayout {
     private final Grid<Product> productGrid = new Grid<>(Product.class);
     private final List<Product> productList = new ArrayList<>();
     private final MultiSelectComboBox<String> categoryFilter = new MultiSelectComboBox<>("Select Categories");
-
+    private final NumberField estimatedSavingsField = new NumberField("Estimated Savings");
     private final com.vaadin.flow.component.combobox.ComboBox<String> sortByFilter = new com.vaadin.flow.component.combobox.ComboBox<>("Sort By");
 
     private Product lastProduct;
+
+
+    // Add this method to create the estimated savings filter
+    private HorizontalLayout createEstimatedSavingsFilter() {
+        // Create a NumberField for estimated savings
+
+        estimatedSavingsField.setPlaceholder("Enter value");
+        estimatedSavingsField.setStep(1); // Increment/Decrement step
+        estimatedSavingsField.setMin(-100);// Minimum value
+        estimatedSavingsField.setMax(100); // Maximum value
+        estimatedSavingsField.setWidth("150px");
+
+        // Add a '%' label
+        com.vaadin.flow.component.html.Span percentSpan = new com.vaadin.flow.component.html.Span("%");
+        percentSpan.getStyle().set("margin-left", "-9px"); // Adjusted margin for closer positioning
+        percentSpan.getStyle().set("font-size", "14px"); // Optional: Adjust font size for better alignment
+
+        // Add a mouse wheel listener for scrolling effect
+        estimatedSavingsField.getElement().addEventListener("wheel", event -> {
+            event.getEventData().put("deltaY", "event.deltaY");
+            String deltaYString = event.getEventData().getString("deltaY");
+
+            try {
+                double deltaY = Double.parseDouble(deltaYString); // Convert to double
+                Double currentValue = estimatedSavingsField.getValue() != null ? estimatedSavingsField.getValue() : 0.0;
+
+                if (deltaY > 0) {
+                    // Scroll down: decrement value
+                    estimatedSavingsField.setValue(Math.max(currentValue - estimatedSavingsField.getStep(), estimatedSavingsField.getMin()));
+                } else {
+                    // Scroll up: increment value
+                    estimatedSavingsField.setValue(Math.min(currentValue + estimatedSavingsField.getStep(), estimatedSavingsField.getMax()));
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid deltaY value: " + deltaYString);
+            }
+
+        }).addEventData("event.deltaY");
+
+        // Add the NumberField and label to a layout
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(estimatedSavingsField, percentSpan);
+        savingsFilterLayout.setAlignItems(Alignment.BASELINE);
+
+        // Add a listener to handle value changes
+        estimatedSavingsField.addValueChangeListener(event -> {
+            Double value = event.getValue();
+            if (value != null) {
+                System.out.println("Estimated Savings: " + value + "%");
+                // Add logic to apply the filter
+            }
+        });
+
+        return savingsFilterLayout;
+    }
 
     public MainView(ProductService productService) {
         this.productService = productService;
@@ -78,6 +134,8 @@ public class MainView extends VerticalLayout {
         add(createFilterLayout(), productGrid, createButtonLayout());
         loadInitialData();
     }
+
+
 
     private HorizontalLayout createFilterLayout() {
         categoryFilter.setItems(CATEGORY_INDEX.keySet());
@@ -91,7 +149,10 @@ public class MainView extends VerticalLayout {
 
         Button searchButton = new Button("Search", e -> searchProducts());
 
-        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter, searchButton);
+        // Add the estimated savings filter
+        HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
+
+        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter, savingsFilter, searchButton);
         filterLayout.setAlignItems(Alignment.END);
         return filterLayout;
     }
@@ -143,6 +204,8 @@ public class MainView extends VerticalLayout {
             return;
         }
 
+      String estimatedSavings =  String.valueOf(((estimatedSavingsField.getValue() != null)) ? estimatedSavingsField.getValue() : "0.0");
+
         // Check if filters are applied
         Set<String> selectedCategories = categoryFilter.getValue();
         String categoriesBinary = null;
@@ -167,7 +230,7 @@ public class MainView extends VerticalLayout {
                 lastProduct.getUsedprice(),
                 lastProduct.getLastchange(),
                 categoriesBinary, // Pass the filter,
-                SelectedSortBy
+                SelectedSortBy,estimatedSavings
         );
 
         if (!products.isEmpty()) {
@@ -235,44 +298,19 @@ public class MainView extends VerticalLayout {
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
-    private void searchProducts() {
-        Map<String, String> filters = new HashMap<>();
-        String selectedSortBy = sortByFilter.getValue();
-        Set<String> selectedCategories = categoryFilter.getValue();
 
-        if ((selectedCategories == null || selectedCategories.isEmpty())
-                && (selectedSortBy == null || selectedSortBy.isEmpty())) {
+    private void searchProducts() {
+        Map<String, String> filters = buildFilters();
+
+        if (filters.isEmpty()) {
             Notification.show("Please select at least one category or sort option.");
             return;
         }
 
-
-        if (selectedSortBy != null) {
-            Integer sortIndex = SORT_BY_INDEX.get(selectedSortBy);
-            filters.put("sort", sortIndex.toString());
-        }
-
-        if ((selectedCategories != null || !selectedCategories.isEmpty())) {
-            String categoriesBinary = convertCategoriesToBackendFormat(selectedCategories);
-            categoriesBinary = categoriesBinary.substring(1);
-
-            filters.put("cat", categoriesBinary);
-        }
-
-
         List<Product> filteredProducts = productService.fetchProductsWithFilters(filters);
 
-        productList.clear();
-        productList.addAll(filteredProducts);
-        productGrid.setItems(productList);
-
-        if (!filteredProducts.isEmpty()) {
-            lastProduct = filteredProducts.get(filteredProducts.size() - 1);
-        } else {
-            lastProduct = null;
-        }
+        updateProductList(filteredProducts);
     }
-
 
     private String convertCategoriesToBackendFormat(Set<String> selectedCategories) {
         StringBuilder sb = new StringBuilder("00000000000000000000000");
@@ -293,4 +331,53 @@ public class MainView extends VerticalLayout {
 
         return sb.toString();
     }
+
+
+
+    private Map<String, String> buildFilters() {
+        Map<String, String> filters = new HashMap<>();
+        addSortFilter(filters);
+        addCategoryFilter(filters);
+        addEstimatedSavingsFilter(filters);
+
+        return filters;
+    }
+
+private void addEstimatedSavingsFilter(Map<String, String> filters) {
+        // Assuming you have a method to get the estimated savings value
+
+        Double estimatedSavingsValue = estimatedSavingsField.getValue();
+
+        if (estimatedSavingsValue != null) {
+            filters.put("minSavings", estimatedSavingsValue.toString());
+        }
+    }
+
+
+    private void addSortFilter(Map<String, String> filters) {
+        String selectedSortBy = sortByFilter.getValue();
+        if (selectedSortBy != null) {
+            Integer sortIndex = SORT_BY_INDEX.get(selectedSortBy);
+            filters.put("sort", sortIndex.toString());
+        }
+    }
+
+    private void addCategoryFilter(Map<String, String> filters) {
+        Set<String> selectedCategories = categoryFilter.getValue();
+        if (selectedCategories != null && !selectedCategories.isEmpty()) {
+            String categoriesBinary = convertCategoriesToBackendFormat(selectedCategories).substring(1);
+            filters.put("cat", categoriesBinary);
+        }
+    }
+
+
+    private void updateProductList(List<Product> filteredProducts) {
+        productList.clear();
+        productList.addAll(filteredProducts);
+        productGrid.setItems(productList);
+
+        lastProduct = filteredProducts.isEmpty() ? null : filteredProducts.get(filteredProducts.size() - 1);
+    }
+
+
 }
