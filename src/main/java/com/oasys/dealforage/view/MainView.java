@@ -91,11 +91,6 @@ public class MainView extends VerticalLayout {
         estimatedSavingsField.setMax(100); // Maximum value
         estimatedSavingsField.setWidth("150px");
 
-        // Add a '%' label
-        com.vaadin.flow.component.html.Span percentSpan = new com.vaadin.flow.component.html.Span("%");
-        percentSpan.getStyle().set("margin-left", "-9px"); // Adjusted margin for closer positioning
-        percentSpan.getStyle().set("font-size", "14px"); // Optional: Adjust font size for better alignment
-
         // Add a mouse wheel listener for scrolling effect
         estimatedSavingsField.getElement().addEventListener("wheel", event -> {
             event.getEventData().put("deltaY", "event.deltaY");
@@ -119,7 +114,7 @@ public class MainView extends VerticalLayout {
         }).addEventData("event.deltaY");
 
         // Add the NumberField and label to a layout
-        HorizontalLayout savingsFilterLayout = new HorizontalLayout(estimatedSavingsField, percentSpan);
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(estimatedSavingsField);
         savingsFilterLayout.setAlignItems(Alignment.BASELINE);
 
         // Add a listener to handle value changes
@@ -141,7 +136,7 @@ public class MainView extends VerticalLayout {
         estimatedPriceDifferenceField.setStep(1); // Increment/Decrement step
         estimatedPriceDifferenceField.setMin(0);// Minimum value
         estimatedPriceDifferenceField.setMax(100); // Maximum value
-        estimatedPriceDifferenceField.setWidth("250px");
+        estimatedPriceDifferenceField.setWidth("150px");
 
        
 
@@ -191,7 +186,7 @@ public class MainView extends VerticalLayout {
         newPriceMin.setStep(1); // Increment/Decrement step
         newPriceMin.setMin(-100);// Minimum value
         newPriceMin.setMax(100); // Maximum value
-        newPriceMin.setWidth("100px");
+        newPriceMin.setWidth("150px");
 
         // Add a '%' label
 
@@ -239,12 +234,8 @@ public class MainView extends VerticalLayout {
         newPriceMax.setStep(1); // Increment/Decrement step
         newPriceMax.setMin(-100);// Minimum value
         newPriceMax.setMax(100); // Maximum value
-        newPriceMax.setWidth("100px");
+        newPriceMax.setWidth("130px");
 
-        // Add a '%' label
-        com.vaadin.flow.component.html.Span percentSpan = new com.vaadin.flow.component.html.Span("%");
-        percentSpan.getStyle().set("margin-left", "-9px"); // Adjusted margin for closer positioning
-        percentSpan.getStyle().set("font-size", "14px"); // Optional: Adjust font size for better alignment
 
         // Add a mouse wheel listener for scrolling effect
         newPriceMax.getElement().addEventListener("wheel", event -> {
@@ -267,7 +258,7 @@ public class MainView extends VerticalLayout {
         }).addEventData("event.deltaY");
 
         // Add the NumberField and label to a layout
-        HorizontalLayout savingsFilterLayout = new HorizontalLayout(newPriceMax, percentSpan);
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(newPriceMax);
         savingsFilterLayout.setAlignItems(Alignment.BASELINE);
 
         // Add a listener to handle value changes
@@ -290,7 +281,7 @@ public class MainView extends VerticalLayout {
         usedPriceMin.setStep(1); // Increment/Decrement step
         usedPriceMin.setMin(-100);// Minimum value
         usedPriceMin.setMax(100); // Maximum value
-        usedPriceMin.setWidth("100px");
+        usedPriceMin.setWidth("130px");
 
       
         // Add a mouse wheel listener for scrolling effect
@@ -314,9 +305,10 @@ public class MainView extends VerticalLayout {
         }).addEventData("event.deltaY");
 
         // Add the NumberField and label to a layout
-        HorizontalLayout savingsFilterLayout = new HorizontalLayout(usedPriceMax);
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(usedPriceMin);
         savingsFilterLayout.setAlignItems(Alignment.BASELINE);
 
+/*
         // Add a listener to handle value changes
         usedPriceMin.addValueChangeListener(event -> {
             Double value = event.getValue();
@@ -325,6 +317,7 @@ public class MainView extends VerticalLayout {
                 // Add logic to apply the filter
             }
         });
+*/
 
         return savingsFilterLayout;
     }
@@ -337,7 +330,7 @@ public class MainView extends VerticalLayout {
         usedPriceMax.setStep(1); // Increment/Decrement step
         usedPriceMax.setMin(-100);// Minimum value
         usedPriceMax.setMax(100); // Maximum value
-        usedPriceMax.setWidth("100px");
+        usedPriceMax.setWidth("130px");
 
 
         // Add a mouse wheel listener for scrolling effect
@@ -385,33 +378,46 @@ public class MainView extends VerticalLayout {
     }
 
 
-    private HorizontalLayout createFilterLayout() {
-        categoryFilter.setItems(CATEGORY_INDEX.keySet());
+private HorizontalLayout createFilterLayout() {
+    categoryFilter.setItems(CATEGORY_INDEX.keySet());
+    categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
 
-        categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+    sortByFilter.setItems(SORT_BY_INDEX.keySet());
+    sortByFilter.setPlaceholder("Select Sort By");
+    sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
 
-        sortByFilter.setItems(SORT_BY_INDEX.keySet());
-        sortByFilter.setPlaceholder("Select Sort By");
-        sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+    // Add the estimated savings filter
+    HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
+    HorizontalLayout priceDifferenceFilter = createEstimatedPriceDifferenceFilter();
+    HorizontalLayout newPriceMin = createNewPriceMinFilter();
+    HorizontalLayout newPriceMax = createNewPriceMaxFilter();
+    HorizontalLayout usedPriceMax = createUsedPriceMaxFilter();
+    HorizontalLayout usedPriceMin = createUsedPriceMinFilter();
+
+    // Create a layout for filters and center align them
+    HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
+            savingsFilter, priceDifferenceFilter, newPriceMin, newPriceMax, usedPriceMin, usedPriceMax);
+    filterLayout.setAlignItems(Alignment.CENTER);
 
 
-        Button searchButton = new Button("Search", e -> searchProducts());
-
-        // Add the estimated savings filter
-        HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
-        HorizontalLayout priceDifferenceFilter = createEstimatedPriceDifferenceFilter();
-
-        HorizontalLayout newPriceMin = createNewPriceMinFilter();
-        HorizontalLayout newPriceMax = createNewPriceMaxFilter();
-        HorizontalLayout usedPriceMax = createUsedPriceMaxFilter();
-        HorizontalLayout usedPriceMin = createUsedPriceMinFilter();
+    filterLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+    filterLayout.setWidthFull();
 
 
-        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
-                savingsFilter, priceDifferenceFilter, newPriceMin, newPriceMax, usedPriceMin, usedPriceMax, searchButton);
-        filterLayout.setAlignItems(Alignment.END);
-        return filterLayout;
-    }
+
+    // Create a separate layout for the search button and center align it
+    Button searchButton = new Button("Search", e -> searchProducts());
+    HorizontalLayout searchButtonLayout = new HorizontalLayout(searchButton);
+    searchButtonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+    searchButtonLayout.setWidthFull();
+
+    // Combine both layouts
+    VerticalLayout combinedLayout = new VerticalLayout(filterLayout, searchButtonLayout);
+    combinedLayout.setAlignItems(Alignment.CENTER);
+    combinedLayout.setWidthFull();
+
+    return new HorizontalLayout(combinedLayout);
+}
 
     private HorizontalLayout createButtonLayout() {
         Button nextPageButton = new Button("Load More Data", e -> loadNextPage());
@@ -460,24 +466,31 @@ public class MainView extends VerticalLayout {
             return;
         }
 
-        String estimatedSavings = String.valueOf(((estimatedSavingsField.getValue() != null))
-                ? estimatedSavingsField.getValue() : "0.0");
+        Map<String, String> filters = buildFilters();
 
-        String estimatedPriceDifference = String.valueOf(((estimatedPriceDifferenceField.getValue() != null))
-                ? estimatedPriceDifferenceField.getValue() : "0.0");
+        if (filters != null
+                && !filters.isEmpty()) {
 
-        // Check if filters are applied
-        Set<String> selectedCategories = categoryFilter.getValue();
-        String categoriesBinary = null;
+            String estimatedSavings = String.valueOf(((estimatedSavingsField.getValue() != null))
+                    ? estimatedSavingsField.getValue() : "");
 
-        if (selectedCategories != null && !selectedCategories.isEmpty()) {
-            categoriesBinary = convertCategoriesToBackendFormat(selectedCategories).substring(1);
+            String estimatedPriceDifference = String.valueOf(((estimatedPriceDifferenceField.getValue() != null))
+                    ? estimatedPriceDifferenceField.getValue() : "");
+
+            // Check if filters are applied
+            Set<String> selectedCategories = categoryFilter.getValue();
+            String categoriesBinary = null;
+
+            if (selectedCategories != null && !selectedCategories.isEmpty()) {
+                categoriesBinary = convertCategoriesToBackendFormat(selectedCategories).substring(1);
+            }
+
+            String SelectedSortBy = SORT_BY_INDEX.containsKey(sortByFilter.getValue())
+                    ? SORT_BY_INDEX.get(sortByFilter.getValue()).toString()
+                    : null;
+
+
         }
-
-
-        String SelectedSortBy = SORT_BY_INDEX.containsKey(sortByFilter.getValue())
-                ? SORT_BY_INDEX.get(sortByFilter.getValue()).toString()
-                : null;
 
 
 //        String SelectedSortBy = sortByFilter.getItems().stream().skip(index).findFirst().orElse(null);
@@ -489,10 +502,7 @@ public class MainView extends VerticalLayout {
                 lastProduct.getDealscore(),
                 lastProduct.getUsedprice(),
                 lastProduct.getLastchange(),
-                categoriesBinary, // Pass the filter,
-                SelectedSortBy,
-                estimatedSavings,
-                estimatedPriceDifference
+                filters
 
         );
 
