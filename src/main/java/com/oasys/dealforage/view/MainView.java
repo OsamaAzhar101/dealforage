@@ -73,6 +73,11 @@ public class MainView extends VerticalLayout {
     private final NumberField estimatedPriceDifferenceField = new NumberField("Estimated Price Difference");
     private final com.vaadin.flow.component.combobox.ComboBox<String> sortByFilter = new com.vaadin.flow.component.combobox.ComboBox<>("Sort By");
 
+    private final NumberField usedPriceMin = new NumberField("Min Used Price");
+    private final NumberField usedPriceMax = new NumberField("Max Used Price");
+    private final NumberField newPriceMin = new NumberField("Min New Price");
+    private final NumberField newPriceMax = new NumberField("Max New Price");
+
     private Product lastProduct;
 
 
@@ -138,10 +143,7 @@ public class MainView extends VerticalLayout {
         estimatedPriceDifferenceField.setMax(100); // Maximum value
         estimatedPriceDifferenceField.setWidth("250px");
 
-        // Add a '$' label
-        com.vaadin.flow.component.html.Span percentSpan = new com.vaadin.flow.component.html.Span("$");
-        percentSpan.getStyle().set("margin-left", "-9px");
-        percentSpan.getStyle().set("font-size", "14px");
+       
 
         // Add a mouse wheel listener for scrolling effect
         estimatedPriceDifferenceField.getElement().addEventListener("wheel", event -> {
@@ -166,7 +168,7 @@ public class MainView extends VerticalLayout {
         }).addEventData("event.deltaY");
 
         // Add the NumberField and label to a layout
-        HorizontalLayout priceDifferenceFilterLayout = new HorizontalLayout(estimatedPriceDifferenceField, percentSpan);
+        HorizontalLayout priceDifferenceFilterLayout = new HorizontalLayout(estimatedPriceDifferenceField);
         priceDifferenceFilterLayout.setAlignItems(Alignment.BASELINE);
 
         // Add a listener to handle value changes
@@ -182,6 +184,198 @@ public class MainView extends VerticalLayout {
     }
 
 
+    private HorizontalLayout createNewPriceMinFilter() {
+        // Create a NumberField for estimated savings
+
+        newPriceMin.setPlaceholder("Enter value");
+        newPriceMin.setStep(1); // Increment/Decrement step
+        newPriceMin.setMin(-100);// Minimum value
+        newPriceMin.setMax(100); // Maximum value
+        newPriceMin.setWidth("100px");
+
+        // Add a '%' label
+
+        // Add a mouse wheel listener for scrolling effect
+        newPriceMin.getElement().addEventListener("wheel", event -> {
+            event.getEventData().put("deltaY", "event.deltaY");
+            String deltaYString = event.getEventData().getString("deltaY");
+
+            try {
+                double deltaY = Double.parseDouble(deltaYString); // Convert to double
+                Double currentValue = newPriceMin.getValue() != null ? newPriceMin.getValue() : 0.0;
+
+                if (deltaY > 0) {
+                    newPriceMin.setValue(Math.max(currentValue - newPriceMin.getStep(), newPriceMin.getMin()));
+                } else {
+                    newPriceMin.setValue(Math.min(currentValue + newPriceMin.getStep(), newPriceMin.getMax()));
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid deltaY value: " + deltaYString);
+            }
+
+        }).addEventData("event.deltaY");
+
+        // Add the NumberField and label to a layout
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(newPriceMin);
+        savingsFilterLayout.setAlignItems(Alignment.BASELINE);
+
+        // Add a listener to handle value changes
+        newPriceMin.addValueChangeListener(event -> {
+            Double value = event.getValue();
+            if (value != null) {
+                System.out.println("newPriceMin : " + value + "%");
+                // Add logic to apply the filter
+            }
+        });
+
+        return savingsFilterLayout;
+    }
+
+
+    private HorizontalLayout createNewPriceMaxFilter() {
+        // Create a NumberField for estimated savings
+
+        newPriceMax.setPlaceholder("Enter value");
+        newPriceMax.setStep(1); // Increment/Decrement step
+        newPriceMax.setMin(-100);// Minimum value
+        newPriceMax.setMax(100); // Maximum value
+        newPriceMax.setWidth("100px");
+
+        // Add a '%' label
+        com.vaadin.flow.component.html.Span percentSpan = new com.vaadin.flow.component.html.Span("%");
+        percentSpan.getStyle().set("margin-left", "-9px"); // Adjusted margin for closer positioning
+        percentSpan.getStyle().set("font-size", "14px"); // Optional: Adjust font size for better alignment
+
+        // Add a mouse wheel listener for scrolling effect
+        newPriceMax.getElement().addEventListener("wheel", event -> {
+            event.getEventData().put("deltaY", "event.deltaY");
+            String deltaYString = event.getEventData().getString("deltaY");
+
+            try {
+                double deltaY = Double.parseDouble(deltaYString); // Convert to double
+                Double currentValue = newPriceMax.getValue() != null ? newPriceMax.getValue() : 0.0;
+
+                if (deltaY > 0) {
+                    newPriceMax.setValue(Math.max(currentValue - newPriceMax.getStep(), newPriceMax.getMin()));
+                } else {
+                    newPriceMax.setValue(Math.min(currentValue + newPriceMax.getStep(), newPriceMax.getMax()));
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid deltaY value: " + deltaYString);
+            }
+
+        }).addEventData("event.deltaY");
+
+        // Add the NumberField and label to a layout
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(newPriceMax, percentSpan);
+        savingsFilterLayout.setAlignItems(Alignment.BASELINE);
+
+        // Add a listener to handle value changes
+        newPriceMax.addValueChangeListener(event -> {
+            Double value = event.getValue();
+            if (value != null) {
+                System.out.println("newPriceMax : " + value + "%");
+                // Add logic to apply the filter
+            }
+        });
+
+        return savingsFilterLayout;
+    }
+
+
+    private HorizontalLayout createUsedPriceMinFilter() {
+        // Create a NumberField for estimated savings
+
+        usedPriceMin.setPlaceholder("Enter value");
+        usedPriceMin.setStep(1); // Increment/Decrement step
+        usedPriceMin.setMin(-100);// Minimum value
+        usedPriceMin.setMax(100); // Maximum value
+        usedPriceMin.setWidth("100px");
+
+      
+        // Add a mouse wheel listener for scrolling effect
+        usedPriceMin.getElement().addEventListener("wheel", event -> {
+            event.getEventData().put("deltaY", "event.deltaY");
+            String deltaYString = event.getEventData().getString("deltaY");
+
+            try {
+                double deltaY = Double.parseDouble(deltaYString); // Convert to double
+                Double currentValue = usedPriceMin.getValue() != null ? usedPriceMin.getValue() : 0.0;
+
+                if (deltaY > 0) {
+                    usedPriceMin.setValue(Math.max(currentValue - usedPriceMin.getStep(), usedPriceMin.getMin()));
+                } else {
+                    usedPriceMin.setValue(Math.min(currentValue + usedPriceMin.getStep(), usedPriceMin.getMax()));
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid deltaY value: " + deltaYString);
+            }
+
+        }).addEventData("event.deltaY");
+
+        // Add the NumberField and label to a layout
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(usedPriceMax);
+        savingsFilterLayout.setAlignItems(Alignment.BASELINE);
+
+        // Add a listener to handle value changes
+        usedPriceMin.addValueChangeListener(event -> {
+            Double value = event.getValue();
+            if (value != null) {
+                System.out.println("newPriceMax : " + value + "%");
+                // Add logic to apply the filter
+            }
+        });
+
+        return savingsFilterLayout;
+    }
+
+
+    private HorizontalLayout createUsedPriceMaxFilter() {
+        // Create a NumberField for estimated savings
+
+        usedPriceMax.setPlaceholder("Enter value");
+        usedPriceMax.setStep(1); // Increment/Decrement step
+        usedPriceMax.setMin(-100);// Minimum value
+        usedPriceMax.setMax(100); // Maximum value
+        usedPriceMax.setWidth("100px");
+
+
+        // Add a mouse wheel listener for scrolling effect
+        usedPriceMax.getElement().addEventListener("wheel", event -> {
+            event.getEventData().put("deltaY", "event.deltaY");
+            String deltaYString = event.getEventData().getString("deltaY");
+
+            try {
+                double deltaY = Double.parseDouble(deltaYString); // Convert to double
+                Double currentValue = usedPriceMax.getValue() != null ? usedPriceMax.getValue() : 0.0;
+
+                if (deltaY > 0) {
+                    usedPriceMax.setValue(Math.max(currentValue - usedPriceMax.getStep(), usedPriceMax.getMin()));
+                } else {
+                    usedPriceMax.setValue(Math.min(currentValue + usedPriceMax.getStep(), usedPriceMax.getMax()));
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid deltaY value: " + deltaYString);
+            }
+
+        }).addEventData("event.deltaY");
+
+        // Add the NumberField and label to a layout
+        HorizontalLayout savingsFilterLayout = new HorizontalLayout(usedPriceMax);
+        savingsFilterLayout.setAlignItems(Alignment.BASELINE);
+
+        // Add a listener to handle value changes
+        usedPriceMax.addValueChangeListener(event -> {
+            Double value = event.getValue();
+            if (value != null) {
+                System.out.println("newPriceMax : " + value + "%");
+                // Add logic to apply the filter
+            }
+        });
+
+        return savingsFilterLayout;
+    }
+
     public MainView(ProductService productService) {
         this.productService = productService;
         setSizeFull();
@@ -189,7 +383,6 @@ public class MainView extends VerticalLayout {
         add(createFilterLayout(), productGrid, createButtonLayout());
         loadInitialData();
     }
-
 
 
     private HorizontalLayout createFilterLayout() {
@@ -206,10 +399,16 @@ public class MainView extends VerticalLayout {
 
         // Add the estimated savings filter
         HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
-      HorizontalLayout priceDifferenceFilter =  createEstimatedPriceDifferenceFilter();
+        HorizontalLayout priceDifferenceFilter = createEstimatedPriceDifferenceFilter();
+
+        HorizontalLayout newPriceMin = createNewPriceMinFilter();
+        HorizontalLayout newPriceMax = createNewPriceMaxFilter();
+        HorizontalLayout usedPriceMax = createUsedPriceMaxFilter();
+        HorizontalLayout usedPriceMin = createUsedPriceMinFilter();
+
 
         HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
-                savingsFilter, priceDifferenceFilter,  searchButton);
+                savingsFilter, priceDifferenceFilter, newPriceMin, newPriceMax, usedPriceMin, usedPriceMax, searchButton);
         filterLayout.setAlignItems(Alignment.END);
         return filterLayout;
     }
@@ -261,11 +460,11 @@ public class MainView extends VerticalLayout {
             return;
         }
 
-      String estimatedSavings =  String.valueOf(((estimatedSavingsField.getValue() != null))
-              ? estimatedSavingsField.getValue() : "0.0");
+        String estimatedSavings = String.valueOf(((estimatedSavingsField.getValue() != null))
+                ? estimatedSavingsField.getValue() : "0.0");
 
-      String estimatedPriceDifference =  String.valueOf(((estimatedPriceDifferenceField.getValue() != null))
-              ? estimatedPriceDifferenceField.getValue() : "0.0");
+        String estimatedPriceDifference = String.valueOf(((estimatedPriceDifferenceField.getValue() != null))
+                ? estimatedPriceDifferenceField.getValue() : "0.0");
 
         // Check if filters are applied
         Set<String> selectedCategories = categoryFilter.getValue();
@@ -397,18 +596,53 @@ public class MainView extends VerticalLayout {
     }
 
 
-
     private Map<String, String> buildFilters() {
         Map<String, String> filters = new HashMap<>();
         addSortFilter(filters);
         addCategoryFilter(filters);
         addEstimatedSavingsFilter(filters);
         addEstimatedPriceDifferenceFilter(filters);
+        addNewPriceMin(filters);
+        addNewPriceMax(filters);
+        addUsedPriceMax(filters);
+        addUsedPriceMin(filters);
 
         return filters;
     }
 
-private void addEstimatedSavingsFilter(Map<String, String> filters) {
+    private void addNewPriceMin(Map<String, String> filters) {
+
+        Double newPriceMinVaue = newPriceMin.getValue();
+        if (newPriceMinVaue != null) {
+            filters.put("minNew", newPriceMin.toString());
+        }
+    }
+
+    private void addNewPriceMax(Map<String, String> filters) {
+
+        Double newPriceMaxValue = newPriceMax.getValue();
+        if (newPriceMaxValue != null) {
+            filters.put("maxNew", newPriceMaxValue.toString());
+        }
+    }
+
+    private void addUsedPriceMin(Map<String, String> filters) {
+
+        Double usedPriceMinValue = usedPriceMin.getValue();
+        if (usedPriceMinValue != null) {
+            filters.put("minUsed", usedPriceMinValue.toString());
+        }
+    }
+
+    private void addUsedPriceMax(Map<String, String> filters) {
+
+        Double usedMaxValue = usedPriceMax.getValue();
+        if (usedMaxValue != null) {
+            filters.put("maxUsed", usedMaxValue.toString());
+        }
+    }
+
+    private void addEstimatedSavingsFilter(Map<String, String> filters) {
         // Assuming you have a method to get the estimated savings value
 
         Double estimatedSavingsValue = estimatedSavingsField.getValue();

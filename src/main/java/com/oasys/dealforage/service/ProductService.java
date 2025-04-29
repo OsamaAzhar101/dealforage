@@ -112,7 +112,25 @@ public class ProductService {
                     } else if (entry.getKey().equals("minDifference")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
-                    } else {
+                    }
+                    else if (entry.getKey().equals("minUsed")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    }
+                    else if (entry.getKey().equals("maxUsed")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    }
+                    else if (entry.getKey().equals("maxNew")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    }
+                    else if (entry.getKey().equals("minNew")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    }
+
+                    else {
                         builder.queryParam(entry.getKey(), entry.getValue());
                     }
 
