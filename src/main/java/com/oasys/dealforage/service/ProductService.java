@@ -43,7 +43,7 @@ public class ProductService {
             if (product.getImage() != null) {
 
                 product.setProcessedImage(getIntegerArrayToString(product.getImage()));
-                System.out.println("Processing image for product: " + product.getProcessedImage());
+//                System.out.println("Processing image for product: " + product.getProcessedImage());
             }
         }
 
@@ -53,7 +53,9 @@ public class ProductService {
 
     public List<Product> fetchNextProducts(String asin, String priceDifference, String savingspercent,
                                            String dealScore, String usedPrice, String lastupdate,
-                                           String categoriesBinary, String SelectedSortBy) {
+                                           String categoriesBinary, String SelectedSortBy,
+                                           String estimatedSavings,
+                                           String estimatedPriceDifference) {
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl("https://dealforager.com/api/products")
                 .queryParam("a", asin)
@@ -63,17 +65,12 @@ public class ProductService {
                 .queryParam("u", usedPrice)
                 .queryParam("l", lastupdate);
 
-        if (categoriesBinary != null) {
-            builder.queryParam("cat", categoriesBinary)
-                    .queryParam("domain", "1");
 
-        }
+        // Add category and domain parameters
+        addCategoryAndDomainParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings, estimatedPriceDifference);
 
-        if (SelectedSortBy != null) {
-            builder.queryParam("sort", SelectedSortBy);
-        } else {
-            builder.queryParam("sort", "0");
-        }
+        addSortParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings, estimatedPriceDifference);
+
 
         String url = builder.toUriString();
 
@@ -83,16 +80,7 @@ public class ProductService {
 
         List<Product> products = Arrays.asList(response.getBody());
 
-        // Process the image field and map it to processedImage
-        for (Product product : products) {
-            if (product.getImage() != null) {
-                product.setProcessedImage(getIntegerArrayToString(product.getImage()));
-                System.out.println("Processing image for product: " + product.getProcessedImage());
-            }
-        }
-
-
-//        return Arrays.asList(response.getBody());
+        processProductImages(products);
 
         return products;
     }
@@ -109,27 +97,30 @@ public class ProductService {
         }
     }
 
-    public List<Product> fetchProducts(int offset, int limit) {
-        String url = String.format("https://dealforager.com/api/products?offset=%d&limit=%d", offset, limit);
-        ResponseEntity<Product[]> response = restTemplate.getForEntity(url, Product[].class);
-        return Arrays.asList(response.getBody());
-    }
-
 
     public List<Product> fetchProductsWithFilters(Map<String, String> filters) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BASE_URL);
 
-        // Add default parameters
-        builder.queryParam("domain", "1");
-        if ((filters != null || !filters.isEmpty())
-                && (filters.get("sort") == null || filters.get("sort").isEmpty())) {
-            builder.queryParam("sort", "0");
-        }
+        addDefaultParameters(builder, filters);
 
         if (filters != null) {
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                    builder.queryParam(entry.getKey(), entry.getValue());
+                    if (entry.getKey().equals("minSavings")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else {
+                        builder.queryParam(entry.getKey(), entry.getValue());
+                    }
+
+                    if (entry.getKey().equals("minDifference")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else {
+                        builder.queryParam(entry.getKey(), entry.getValue());
+                    }
+
+
                 }
             }
         }
@@ -141,12 +132,9 @@ public class ProductService {
 
         List<Product> products = Arrays.asList(response.getBody());
         // Process the image field and map it to processedImage
-        for (Product product : products) {
-            if (product.getImage() != null) {
-                product.setProcessedImage(getIntegerArrayToString(product.getImage()));
-                System.out.println("Processing image for product: " + product.getProcessedImage());
-            }
-        }
+
+        processProductImages(products);
+
         return products;
     }
 
@@ -159,4 +147,82 @@ public class ProductService {
         }
         return imageName;
     }
+
+    private void addDefaultParameters(UriComponentsBuilder builder, Map<String, String> filters) {
+        // Add default parameters
+        builder.queryParam("domain", "1");
+        if ((filters != null || !filters.isEmpty())) {
+
+            if ((filters.get("sort") == null || filters.get("sort").isEmpty())) {
+
+                builder.queryParam("sort", "0");
+            }
+            if (filters.get("cat") == null || filters.get("cat").isEmpty()) {
+                builder.queryParam("cat", "0000000000000000000000");
+            }
+
+        }
+    }
+
+    private void processProductImages(List<Product> products) {
+        for (Product product : products) {
+            if (product.getImage() != null) {
+                product.setProcessedImage(getIntegerArrayToString(product.getImage()));
+//                System.out.println("Processing image for product: " + product.getProcessedImage());
+            }
+        }
+    }
+
+    private void addSortParams(UriComponentsBuilder builder, String categoriesBinary, String selectedSortBy,
+                               String estimatedSavings, String estimatedPriceDifference) {
+
+
+        if(estimatedSavings != null && !estimatedSavings.isEmpty()){
+            builder.queryParam("minSavings", estimatedSavings.contains(".0")
+                    ? estimatedSavings.replaceAll(".0", "") : estimatedSavings);
+        }
+
+        if(estimatedPriceDifference != null && !estimatedPriceDifference.isEmpty()){
+            builder.queryParam("minDifference", estimatedPriceDifference.contains(".0")
+                    ? estimatedPriceDifference.replaceAll(".0", "") : estimatedPriceDifference);
+        }
+
+
+    }
+
+
+    private void addCategoryAndDomainParams(UriComponentsBuilder builder,
+                                            String categoriesBinary,
+                                            String SelectedSortBy,
+                                            String estimatedSavings,
+                                            String estimatedPriceDifference) {
+
+        if (categoriesBinary != null
+                || SelectedSortBy != null
+                || estimatedSavings != null
+        || estimatedPriceDifference != null) {
+
+
+            if (categoriesBinary == null) {
+                builder.queryParam("cat", "0000000000000000000000").queryParam("domain", "1");
+            } else {
+                if (categoriesBinary != null) {
+                    builder.queryParam("cat", categoriesBinary).queryParam("domain", "1");
+                }
+
+            }
+
+            if(SelectedSortBy == null) {
+                builder.queryParam("sort", "0");
+            }
+            else {
+             builder.queryParam("sort", SelectedSortBy);
+            }
+
+
+        }
+
+
+    }
+
 }
