@@ -69,6 +69,8 @@ public class MainView extends VerticalLayout {
     private final List<Product> productList = new ArrayList<>();
     private final MultiSelectComboBox<String> categoryFilter = new MultiSelectComboBox<>("Select Categories");
     private final NumberField estimatedSavingsField = new NumberField("Estimated Savings");
+
+    private final NumberField estimatedPriceDifferenceField = new NumberField("Estimated Price Difference");
     private final com.vaadin.flow.component.combobox.ComboBox<String> sortByFilter = new com.vaadin.flow.component.combobox.ComboBox<>("Sort By");
 
     private Product lastProduct;
@@ -127,6 +129,59 @@ public class MainView extends VerticalLayout {
         return savingsFilterLayout;
     }
 
+
+    private HorizontalLayout createEstimatedPriceDifferenceFilter() {
+
+        estimatedPriceDifferenceField.setPlaceholder("Enter value");
+        estimatedPriceDifferenceField.setStep(1); // Increment/Decrement step
+        estimatedPriceDifferenceField.setMin(0);// Minimum value
+        estimatedPriceDifferenceField.setMax(100); // Maximum value
+        estimatedPriceDifferenceField.setWidth("250px");
+
+        // Add a '$' label
+        com.vaadin.flow.component.html.Span percentSpan = new com.vaadin.flow.component.html.Span("$");
+        percentSpan.getStyle().set("margin-left", "-9px");
+        percentSpan.getStyle().set("font-size", "14px");
+
+        // Add a mouse wheel listener for scrolling effect
+        estimatedPriceDifferenceField.getElement().addEventListener("wheel", event -> {
+            event.getEventData().put("deltaY", "event.deltaY");
+            String deltaYString = event.getEventData().getString("deltaY");
+
+            try {
+                double deltaY = Double.parseDouble(deltaYString); // Convert to double
+                Double currentValue = estimatedPriceDifferenceField.getValue() != null ? estimatedPriceDifferenceField.getValue() : 0.0;
+
+                if (deltaY > 0) {
+                    // Scroll down: decrement value
+                    estimatedSavingsField.setValue(Math.max(currentValue - estimatedPriceDifferenceField.getStep(), estimatedPriceDifferenceField.getMin()));
+                } else {
+                    // Scroll up: increment value
+                    estimatedSavingsField.setValue(Math.min(currentValue + estimatedPriceDifferenceField.getStep(), estimatedPriceDifferenceField.getMax()));
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid deltaY value: " + deltaYString);
+            }
+
+        }).addEventData("event.deltaY");
+
+        // Add the NumberField and label to a layout
+        HorizontalLayout priceDifferenceFilterLayout = new HorizontalLayout(estimatedPriceDifferenceField, percentSpan);
+        priceDifferenceFilterLayout.setAlignItems(Alignment.BASELINE);
+
+        // Add a listener to handle value changes
+        estimatedPriceDifferenceField.addValueChangeListener(event -> {
+            Double value = event.getValue();
+            if (value != null) {
+                System.out.println("Estimated Price Difference: " + value + "$");
+
+            }
+        });
+
+        return priceDifferenceFilterLayout;
+    }
+
+
     public MainView(ProductService productService) {
         this.productService = productService;
         setSizeFull();
@@ -151,8 +206,10 @@ public class MainView extends VerticalLayout {
 
         // Add the estimated savings filter
         HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
+      HorizontalLayout priceDifferenceFilter =  createEstimatedPriceDifferenceFilter();
 
-        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter, savingsFilter, searchButton);
+        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
+                savingsFilter, priceDifferenceFilter,  searchButton);
         filterLayout.setAlignItems(Alignment.END);
         return filterLayout;
     }
@@ -204,7 +261,11 @@ public class MainView extends VerticalLayout {
             return;
         }
 
-      String estimatedSavings =  String.valueOf(((estimatedSavingsField.getValue() != null)) ? estimatedSavingsField.getValue() : "0.0");
+      String estimatedSavings =  String.valueOf(((estimatedSavingsField.getValue() != null))
+              ? estimatedSavingsField.getValue() : "0.0");
+
+      String estimatedPriceDifference =  String.valueOf(((estimatedPriceDifferenceField.getValue() != null))
+              ? estimatedPriceDifferenceField.getValue() : "0.0");
 
         // Check if filters are applied
         Set<String> selectedCategories = categoryFilter.getValue();
@@ -230,7 +291,10 @@ public class MainView extends VerticalLayout {
                 lastProduct.getUsedprice(),
                 lastProduct.getLastchange(),
                 categoriesBinary, // Pass the filter,
-                SelectedSortBy,estimatedSavings
+                SelectedSortBy,
+                estimatedSavings,
+                estimatedPriceDifference
+
         );
 
         if (!products.isEmpty()) {
@@ -339,6 +403,7 @@ public class MainView extends VerticalLayout {
         addSortFilter(filters);
         addCategoryFilter(filters);
         addEstimatedSavingsFilter(filters);
+        addEstimatedPriceDifferenceFilter(filters);
 
         return filters;
     }
@@ -350,6 +415,15 @@ private void addEstimatedSavingsFilter(Map<String, String> filters) {
 
         if (estimatedSavingsValue != null) {
             filters.put("minSavings", estimatedSavingsValue.toString());
+        }
+    }
+
+    private void addEstimatedPriceDifferenceFilter(Map<String, String> filters) {
+        // Assuming you have a method to get the estimated price difference value
+        Double estimatedPriceDifferenceValue = estimatedPriceDifferenceField.getValue();
+
+        if (estimatedPriceDifferenceValue != null) {
+            filters.put("minDifference", estimatedPriceDifferenceValue.toString());
         }
     }
 

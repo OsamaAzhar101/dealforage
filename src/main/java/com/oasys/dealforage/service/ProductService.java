@@ -54,7 +54,8 @@ public class ProductService {
     public List<Product> fetchNextProducts(String asin, String priceDifference, String savingspercent,
                                            String dealScore, String usedPrice, String lastupdate,
                                            String categoriesBinary, String SelectedSortBy,
-                                           String estimatedSavings) {
+                                           String estimatedSavings,
+                                           String estimatedPriceDifference) {
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl("https://dealforager.com/api/products")
                 .queryParam("a", asin)
@@ -66,9 +67,9 @@ public class ProductService {
 
 
         // Add category and domain parameters
-        addCategoryAndDomainParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings);
+        addCategoryAndDomainParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings, estimatedPriceDifference);
 
-        addSortParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings);
+        addSortParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings, estimatedPriceDifference);
 
 
         String url = builder.toUriString();
@@ -106,6 +107,13 @@ public class ProductService {
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 if (entry.getValue() != null && !entry.getValue().isEmpty()) {
                     if (entry.getKey().equals("minSavings")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else {
+                        builder.queryParam(entry.getKey(), entry.getValue());
+                    }
+
+                    if (entry.getKey().equals("minDifference")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
                     } else {
@@ -165,12 +173,18 @@ public class ProductService {
         }
     }
 
-    private void addSortParams(UriComponentsBuilder builder, String categoriesBinary, String selectedSortBy, String estimatedSavings) {
+    private void addSortParams(UriComponentsBuilder builder, String categoriesBinary, String selectedSortBy,
+                               String estimatedSavings, String estimatedPriceDifference) {
 
 
         if(estimatedSavings != null && !estimatedSavings.isEmpty()){
             builder.queryParam("minSavings", estimatedSavings.contains(".0")
                     ? estimatedSavings.replaceAll(".0", "") : estimatedSavings);
+        }
+
+        if(estimatedPriceDifference != null && !estimatedPriceDifference.isEmpty()){
+            builder.queryParam("minDifference", estimatedPriceDifference.contains(".0")
+                    ? estimatedPriceDifference.replaceAll(".0", "") : estimatedPriceDifference);
         }
 
 
@@ -180,11 +194,13 @@ public class ProductService {
     private void addCategoryAndDomainParams(UriComponentsBuilder builder,
                                             String categoriesBinary,
                                             String SelectedSortBy,
-                                            String estimatedSavings) {
+                                            String estimatedSavings,
+                                            String estimatedPriceDifference) {
 
         if (categoriesBinary != null
                 || SelectedSortBy != null
-                || estimatedSavings != null) {
+                || estimatedSavings != null
+        || estimatedPriceDifference != null) {
 
 
             if (categoriesBinary == null) {
