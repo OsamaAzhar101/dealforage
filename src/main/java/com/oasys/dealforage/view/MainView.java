@@ -372,6 +372,7 @@ public class MainView extends VerticalLayout {
     public MainView(ProductService productService) {
         this.productService = productService;
         setSizeFull();
+        getElement().getStyle().set("zoom", "80%"); // Set zoom level to 80%
         configureGrid();
         add(createFilterLayout(), productGrid, createButtonLayout());
         loadInitialData();
@@ -381,9 +382,11 @@ public class MainView extends VerticalLayout {
 private HorizontalLayout createFilterLayout() {
     categoryFilter.setItems(CATEGORY_INDEX.keySet());
     categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+    categoryFilter.setWidth("150px");
 
     sortByFilter.setItems(SORT_BY_INDEX.keySet());
     sortByFilter.setPlaceholder("Select Sort By");
+    sortByFilter.setWidth("130px");
     sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
 
     // Add the estimated savings filter
@@ -415,6 +418,7 @@ private HorizontalLayout createFilterLayout() {
     VerticalLayout combinedLayout = new VerticalLayout(filterLayout, searchButtonLayout);
     combinedLayout.setAlignItems(Alignment.CENTER);
     combinedLayout.setWidthFull();
+    combinedLayout.getStyle().set("margin-left", "100px");
 
     return new HorizontalLayout(combinedLayout);
 }
