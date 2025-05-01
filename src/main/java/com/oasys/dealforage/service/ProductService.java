@@ -207,6 +207,10 @@ public class ProductService {
                 builder.queryParam("maxNew", filters.get("maxNew"));
             }
 
+            if (filters.containsKey("search") && !filters.get("search").isEmpty()) {
+                builder.queryParam("search", filters.get("search"));
+            }
+
         }
     }
 
@@ -223,6 +227,7 @@ public class ProductService {
                         || filters.containsKey("maxUsed")
                         || filters.containsKey("minNew")
                         || filters.containsKey("maxNew")
+                        || filters.containsKey("search")
         )) {
 
 
