@@ -53,9 +53,7 @@ public class ProductService {
 
     public List<Product> fetchNextProducts(String asin, String priceDifference, String savingspercent,
                                            String dealScore, String usedPrice, String lastupdate,
-                                           String categoriesBinary, String SelectedSortBy,
-                                           String estimatedSavings,
-                                           String estimatedPriceDifference) {
+                                           Map<String, String> filters) {
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl("https://dealforager.com/api/products")
                 .queryParam("a", asin)
@@ -67,9 +65,9 @@ public class ProductService {
 
 
         // Add category and domain parameters
-        addCategoryAndDomainParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings, estimatedPriceDifference);
+        addCategoryAndDomainParams(builder, filters);
 
-        addSortParams(builder, categoriesBinary, SelectedSortBy, estimatedSavings, estimatedPriceDifference);
+        addSortParams(builder, filters);
 
 
         String url = builder.toUriString();
@@ -109,11 +107,19 @@ public class ProductService {
                     if (entry.getKey().equals("minSavings")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
-                    } else {
-                        builder.queryParam(entry.getKey(), entry.getValue());
-                    }
-
-                    if (entry.getKey().equals("minDifference")) {
+                    } else if (entry.getKey().equals("minDifference")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else if (entry.getKey().equals("minUsed")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else if (entry.getKey().equals("maxUsed")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else if (entry.getKey().equals("maxNew")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
+                                ? entry.getValue().replaceAll(".0", "") : entry.getValue());
+                    } else if (entry.getKey().equals("minNew")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
                     } else {
@@ -173,50 +179,66 @@ public class ProductService {
         }
     }
 
-    private void addSortParams(UriComponentsBuilder builder, String categoriesBinary, String selectedSortBy,
-                               String estimatedSavings, String estimatedPriceDifference) {
+    private void addSortParams(UriComponentsBuilder builder, Map<String, String> filters) {
 
+        if (filters != null && filters.size() > 0) {
+            if (filters.containsKey("minSavings") && !filters.get("minSavings").isEmpty()) {
+                builder.queryParam("minSavings", filters.get("minSavings"));
+            }
 
-        if(estimatedSavings != null && !estimatedSavings.isEmpty()){
-            builder.queryParam("minSavings", estimatedSavings.contains(".0")
-                    ? estimatedSavings.replaceAll(".0", "") : estimatedSavings);
+            if (filters.containsKey("minDifference") && !filters.get("minDifference").isEmpty()) {
+                builder.queryParam("minDifference", filters.get("minDifference"));
+
+            }
+
+            if (filters.containsKey("minUsed") && !filters.get("minUsed").isEmpty()) {
+                builder.queryParam("minUsed", filters.get("minUsed"));
+            }
+
+            if (filters.containsKey("maxUsed") && !filters.get("maxUsed").isEmpty()) {
+                builder.queryParam("maxUsed", filters.get("maxUsed"));
+            }
+
+            if (filters.containsKey("minNew") && !filters.get("minNew").isEmpty()) {
+                builder.queryParam("minNew", filters.get("minNew"));
+            }
+
+            if (filters.containsKey("maxNew") && !filters.get("maxNew").isEmpty()) {
+                builder.queryParam("maxNew", filters.get("maxNew"));
+            }
+
         }
-
-        if(estimatedPriceDifference != null && !estimatedPriceDifference.isEmpty()){
-            builder.queryParam("minDifference", estimatedPriceDifference.contains(".0")
-                    ? estimatedPriceDifference.replaceAll(".0", "") : estimatedPriceDifference);
-        }
-
-
     }
 
 
     private void addCategoryAndDomainParams(UriComponentsBuilder builder,
-                                            String categoriesBinary,
-                                            String SelectedSortBy,
-                                            String estimatedSavings,
-                                            String estimatedPriceDifference) {
+                                            Map<String, String> filters) {
 
-        if (categoriesBinary != null
-                || SelectedSortBy != null
-                || estimatedSavings != null
-        || estimatedPriceDifference != null) {
+        if (filters != null && filters.size() > 0 && (
+                filters.containsKey("cat")
+                        || filters.containsKey("sort")
+                        || filters.containsKey("minSavings")
+                        || filters.containsKey("minDifference")
+                        || filters.containsKey("minUsed")
+                        || filters.containsKey("maxUsed")
+                        || filters.containsKey("minNew")
+                        || filters.containsKey("maxNew")
+        )) {
 
 
-            if (categoriesBinary == null) {
+            if (!filters.containsKey("cat")) {
                 builder.queryParam("cat", "0000000000000000000000").queryParam("domain", "1");
             } else {
-                if (categoriesBinary != null) {
-                    builder.queryParam("cat", categoriesBinary).queryParam("domain", "1");
+                if (filters.containsKey("cat")) {
+                    builder.queryParam("cat", filters.get("cat")).queryParam("domain", "1");
                 }
 
             }
 
-            if(SelectedSortBy == null) {
+            if (!filters.containsKey("sort")) {
                 builder.queryParam("sort", "0");
-            }
-            else {
-             builder.queryParam("sort", SelectedSortBy);
+            } else {
+                builder.queryParam("sort", filters.get("sort"));
             }
 
 
