@@ -430,6 +430,7 @@ private HorizontalLayout createFilterLayout() {
     return new HorizontalLayout(combinedLayout);
 }
 
+/*
     private HorizontalLayout createButtonLayout() {
         Button nextPageButton = new Button("Load More Data", e -> loadNextPage());
         Button exportButton = new Button("Export Selected to CSV", e -> exportSelectedProducts());
@@ -439,13 +440,90 @@ private HorizontalLayout createFilterLayout() {
         buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         return buttonLayout;
     }
+*/
 
+
+    private HorizontalLayout createButtonLayout() {
+        Button nextPageButton = new Button("Load More Data", e -> loadNextPage());
+
+        // Create a MenuBar for export options
+        com.vaadin.flow.component.menubar.MenuBar exportMenu = new com.vaadin.flow.component.menubar.MenuBar();
+
+        // Add "Export to CSV" option
+        exportMenu.addItem("Export to CSV", e -> exportSelectedProductsToCSV());
+
+        // Add "Export to JSON" option
+        exportMenu.addItem("Export to JSON", e -> exportSelectedProductsToJSON());
+
+        // Create the layout
+        HorizontalLayout buttonLayout = new HorizontalLayout(nextPageButton, exportMenu);
+        buttonLayout.setWidthFull();
+        buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        return buttonLayout;
+    }
+
+    // Method to export selected products to CSV
+    private void exportSelectedProductsToCSV() {
+        // Logic for exporting to CSV
+        exportSelectedProducts();
+    }
+
+    private void exportSelectedProductsToJSON() {
+        Set<Product> selectedProducts = productGrid.getSelectedItems();
+        if (selectedProducts.isEmpty()) {
+            Notification.show("No products selected for export.");
+            return;
+        }
+
+        try {
+
+            String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(selectedProducts);
+            byte[] jsonData = json.getBytes(StandardCharsets.UTF_8);
+            StreamResource resource = new StreamResource("selected_products.json", () -> new ByteArrayInputStream(jsonData));
+
+            // Remove any existing download links
+            getChildren()
+                    .filter(component -> component instanceof Anchor)
+                    .forEach(this::remove);
+
+            // Create a new download link
+            Anchor downloadLink = new Anchor(resource, "Download JSON");
+            downloadLink.getElement().setAttribute("download", true);
+            downloadLink.getElement().executeJs(
+                    "this.addEventListener('click', () => $0.$server.notifyDownloadComplete());",
+                    getElement()
+            );
+
+            // Add the download link to the layout
+            HorizontalLayout downloadLayout = new HorizontalLayout(downloadLink);
+            downloadLayout.setWidthFull();
+            downloadLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+            add(downloadLayout);
+
+        } catch (IOException e) {
+            Notification.show("Error generating JSON: " + e.getMessage());
+        }
+    }
     private void configureGrid() {
         productGrid.setSizeFull();
 
-        // Set predefined columns first
-        productGrid.setColumns("asin", "title", "newprice", "usedprice", "savingspercent");
-        // Add a custom column for the product image
+
+        productGrid.removeAllColumns();
+
+
+        productGrid.addComponentColumn(product -> {
+            Anchor link = new Anchor("https://www.amazon.com/dp/" + product.getAsin(), product.getAsin());
+            link.setTarget("_blank");
+            return link;
+        }).setHeader("ASIN").setAutoWidth(true); // DO NOT set key to "asin"
+
+
+        productGrid.addColumn(Product::getTitle).setHeader("Title").setAutoWidth(true);
+        productGrid.addColumn(Product::getNewprice).setHeader("New Price").setAutoWidth(true);
+        productGrid.addColumn(Product::getUsedprice).setHeader("Used Price").setAutoWidth(true);
+        productGrid.addColumn(Product::getSavingspercent).setHeader("Savings %").setAutoWidth(true);
+
+
         productGrid.addComponentColumn(product -> {
             if (product.getProcessedImage() != null) {
                 com.vaadin.flow.component.html.Image image = new com.vaadin.flow.component.html.Image(product.getProcessedImage(), "Product Image");
@@ -457,9 +535,10 @@ private HorizontalLayout createFilterLayout() {
             }
         }).setHeader("Image").setAutoWidth(true);
 
-
         productGrid.setSelectionMode(Grid.SelectionMode.MULTI);
     }
+
+
 
     private void loadInitialData() {
         List<Product> products = productService.fetchInitialProducts();
