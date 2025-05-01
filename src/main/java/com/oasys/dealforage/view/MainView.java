@@ -13,6 +13,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -77,6 +78,8 @@ public class MainView extends VerticalLayout {
     private final NumberField usedPriceMax = new NumberField("Max Used Price");
     private final NumberField newPriceMin = new NumberField("Min New Price");
     private final NumberField newPriceMax = new NumberField("Max New Price");
+
+    private final TextField searchTextField = new TextField("Search");
 
     private Product lastProduct;
 
@@ -308,16 +311,6 @@ public class MainView extends VerticalLayout {
         HorizontalLayout savingsFilterLayout = new HorizontalLayout(usedPriceMin);
         savingsFilterLayout.setAlignItems(Alignment.BASELINE);
 
-/*
-        // Add a listener to handle value changes
-        usedPriceMin.addValueChangeListener(event -> {
-            Double value = event.getValue();
-            if (value != null) {
-                System.out.println("newPriceMax : " + value + "%");
-                // Add logic to apply the filter
-            }
-        });
-*/
 
         return savingsFilterLayout;
     }
@@ -372,7 +365,7 @@ public class MainView extends VerticalLayout {
     public MainView(ProductService productService) {
         this.productService = productService;
         setSizeFull();
-        getElement().getStyle().set("zoom", "80%"); // Set zoom level to 80%
+        getElement().getStyle().set("zoom", "70%"); // Set zoom level to 70%
         configureGrid();
         add(createFilterLayout(), productGrid, createButtonLayout());
         loadInitialData();
@@ -389,6 +382,19 @@ private HorizontalLayout createFilterLayout() {
     sortByFilter.setWidth("130px");
     sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
 
+
+    // Create a search text bar
+
+    searchTextField.setPlaceholder("Enter search text");
+    searchTextField.setWidth("200px");
+    searchTextField.addValueChangeListener(event -> {
+        String searchText = event.getValue();
+        System.out.println("Search Text: " + searchText);
+        // Add logic to handle search text
+    });
+
+
+
     // Add the estimated savings filter
     HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
     HorizontalLayout priceDifferenceFilter = createEstimatedPriceDifferenceFilter();
@@ -399,7 +405,8 @@ private HorizontalLayout createFilterLayout() {
 
     // Create a layout for filters and center align them
     HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
-            savingsFilter, priceDifferenceFilter, newPriceMin, newPriceMax, usedPriceMin, usedPriceMax);
+            savingsFilter, priceDifferenceFilter, newPriceMin,
+            newPriceMax, usedPriceMin, usedPriceMax, searchTextField);
     filterLayout.setAlignItems(Alignment.CENTER);
 
 
@@ -580,7 +587,7 @@ private HorizontalLayout createFilterLayout() {
         Map<String, String> filters = buildFilters();
 
         if (filters.isEmpty()) {
-            Notification.show("Please select at least one category or sort option.");
+            Notification.show("Please select at least filter option.");
             return;
         }
 
@@ -620,6 +627,8 @@ private HorizontalLayout createFilterLayout() {
         addNewPriceMax(filters);
         addUsedPriceMax(filters);
         addUsedPriceMin(filters);
+        addSearchTextFilter(filters);
+
 
         return filters;
     }
@@ -648,11 +657,20 @@ private HorizontalLayout createFilterLayout() {
         }
     }
 
+
+
     private void addUsedPriceMax(Map<String, String> filters) {
 
         Double usedMaxValue = usedPriceMax.getValue();
         if (usedMaxValue != null) {
             filters.put("maxUsed", usedMaxValue.toString());
+        }
+    }
+
+    private void addSearchTextFilter(Map<String, String> filters) {
+        String searchText = searchTextField.getValue();
+        if (searchText != null && !searchText.isEmpty()) {
+            filters.put("search", searchText);
         }
     }
 
