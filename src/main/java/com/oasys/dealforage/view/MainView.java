@@ -29,6 +29,9 @@ import java.util.*;
 @Route("")
 public class MainView extends VerticalLayout {
 
+    private HorizontalLayout downloadLinkLayout = null;
+    private HorizontalLayout downloadLayoutCSV = null;
+
     private static final Map<String, Integer> CATEGORY_INDEX = new HashMap<>();
     private static final Map<String, Integer> SORT_BY_INDEX = new LinkedHashMap<>();
 
@@ -468,6 +471,7 @@ private HorizontalLayout createFilterLayout() {
         exportSelectedProducts();
     }
 
+
     private void exportSelectedProductsToJSON() {
         Set<Product> selectedProducts = productGrid.getSelectedItems();
         if (selectedProducts.isEmpty()) {
@@ -476,17 +480,15 @@ private HorizontalLayout createFilterLayout() {
         }
 
         try {
-
             String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(selectedProducts);
             byte[] jsonData = json.getBytes(StandardCharsets.UTF_8);
             StreamResource resource = new StreamResource("selected_products.json", () -> new ByteArrayInputStream(jsonData));
 
-            // Remove any existing download links
-            getChildren()
-                    .filter(component -> component instanceof Anchor)
-                    .forEach(this::remove);
 
-            // Create a new download link
+            if (downloadLinkLayout != null) {
+                remove(downloadLinkLayout);
+            }
+
             Anchor downloadLink = new Anchor(resource, "Download JSON");
             downloadLink.getElement().setAttribute("download", true);
             downloadLink.getElement().executeJs(
@@ -494,16 +496,18 @@ private HorizontalLayout createFilterLayout() {
                     getElement()
             );
 
-            // Add the download link to the layout
-            HorizontalLayout downloadLayout = new HorizontalLayout(downloadLink);
-            downloadLayout.setWidthFull();
-            downloadLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-            add(downloadLayout);
+            downloadLinkLayout = new HorizontalLayout(downloadLink);
+            downloadLinkLayout.setWidthFull();
+            downloadLinkLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+
+            add(downloadLinkLayout);
 
         } catch (IOException e) {
             Notification.show("Error generating JSON: " + e.getMessage());
         }
     }
+
+
     private void configureGrid() {
         productGrid.setSizeFull();
 
@@ -633,9 +637,10 @@ private HorizontalLayout createFilterLayout() {
             byte[] csvData = writer.toString().getBytes(StandardCharsets.UTF_8);
             StreamResource resource = new StreamResource("selected_products.csv", () -> new ByteArrayInputStream(csvData));
 
-            getChildren()
-                    .filter(component -> component instanceof Anchor)
-                    .forEach(this::remove);
+
+            if (downloadLayoutCSV != null) {
+                remove(downloadLayoutCSV);
+            }
 
             Anchor downloadLink = new Anchor(resource, "Download CSV");
             downloadLink.getElement().setAttribute("download", true);
@@ -644,15 +649,17 @@ private HorizontalLayout createFilterLayout() {
                     getElement()
             );
 
-            HorizontalLayout downloadLayout = new HorizontalLayout(downloadLink);
-            downloadLayout.setWidthFull();
-            downloadLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-            add(downloadLayout);
+
+            downloadLayoutCSV = new HorizontalLayout(downloadLink);
+            downloadLayoutCSV.setWidthFull();
+            downloadLayoutCSV.setJustifyContentMode(JustifyContentMode.CENTER);
+            add(downloadLayoutCSV);
 
         } catch (IOException e) {
             Notification.show("Error generating CSV: " + e.getMessage());
         }
     }
+
 
     @ClientCallable
     public void notifyDownloadComplete() {
