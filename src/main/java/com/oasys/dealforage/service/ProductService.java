@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 
+import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -131,10 +133,19 @@ public class ProductService {
             }
         }
 
-        String urlWithParams = builder.toUriString();
-        System.out.println("Fetching products with URL: " + urlWithParams);
+        URI uri = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+                .queryParam("domain", "1")
+                .queryParam("sort", "0")
+                .queryParam("cat", "0000000000000000000000")
+                .queryParam("search",  URLEncoder.encode("cordless drill", StandardCharsets.UTF_8))
+                .build(true)  // <- this ensures encoding
+                .toUri();
 
-        ResponseEntity<Product[]> response = restTemplate.getForEntity(urlWithParams, Product[].class);
+
+        System.out.println("Fetching products with URL: " + uri);
+
+
+        ResponseEntity<Product[]> response = restTemplate.getForEntity(uri, Product[].class);
 
         List<Product> products = Arrays.asList(response.getBody());
         // Process the image field and map it to processedImage
