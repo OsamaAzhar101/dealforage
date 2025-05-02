@@ -122,7 +122,12 @@ public class ProductService {
                     } else if (entry.getKey().equals("minNew")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
-                    } else {
+                    }
+                    else if (entry.getKey().equals("search")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(" ")
+                                ? entry.getValue().replaceAll(" ", "+") : entry.getValue());
+                    }
+                    else {
                         builder.queryParam(entry.getKey(), entry.getValue());
                     }
 
@@ -133,6 +138,7 @@ public class ProductService {
 
         String urlWithParams = builder.toUriString();
         System.out.println("Fetching products with URL: " + urlWithParams);
+
 
         ResponseEntity<Product[]> response = restTemplate.getForEntity(urlWithParams, Product[].class);
 
@@ -208,8 +214,12 @@ public class ProductService {
             }
 
             if (filters.containsKey("search") && !filters.get("search").isEmpty()) {
-                builder.queryParam("search", filters.get("search"));
+                    builder.queryParam("search", filters.get("search").contains( " ") ?
+                            filters.get("search").replaceAll(" ", "+") : filters.get("search"));
+
             }
+
+
 
         }
     }
