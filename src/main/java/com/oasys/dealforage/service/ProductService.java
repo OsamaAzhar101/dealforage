@@ -6,8 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 
-import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -124,7 +122,12 @@ public class ProductService {
                     } else if (entry.getKey().equals("minNew")) {
                         builder.queryParam(entry.getKey(), entry.getValue().contains(".0")
                                 ? entry.getValue().replaceAll(".0", "") : entry.getValue());
-                    } else {
+                    }
+                    else if (entry.getKey().equals("search")) {
+                        builder.queryParam(entry.getKey(), entry.getValue().contains(" ")
+                                ? entry.getValue().replaceAll(" ", "+") : entry.getValue());
+                    }
+                    else {
                         builder.queryParam(entry.getKey(), entry.getValue());
                     }
 
@@ -133,19 +136,11 @@ public class ProductService {
             }
         }
 
-        URI uri = UriComponentsBuilder.fromHttpUrl(BASE_URL)
-                .queryParam("domain", "1")
-                .queryParam("sort", "0")
-                .queryParam("cat", "0000000000000000000000")
-                .queryParam("search",  URLEncoder.encode("cordless drill", StandardCharsets.UTF_8))
-                .build(true)  // <- this ensures encoding
-                .toUri();
+        String urlWithParams = builder.toUriString();
+        System.out.println("Fetching products with URL: " + urlWithParams);
 
 
-        System.out.println("Fetching products with URL: " + uri);
-
-
-        ResponseEntity<Product[]> response = restTemplate.getForEntity(uri, Product[].class);
+        ResponseEntity<Product[]> response = restTemplate.getForEntity(urlWithParams, Product[].class);
 
         List<Product> products = Arrays.asList(response.getBody());
         // Process the image field and map it to processedImage
@@ -219,8 +214,12 @@ public class ProductService {
             }
 
             if (filters.containsKey("search") && !filters.get("search").isEmpty()) {
-                builder.queryParam("search", filters.get("search"));
+                    builder.queryParam("search", filters.get("search").contains( " ") ?
+                            filters.get("search").replaceAll(" ", "+") : filters.get("search"));
+
             }
+
+
 
         }
     }
