@@ -522,11 +522,38 @@ private HorizontalLayout createFilterLayout() {
         }).setHeader("ASIN").setAutoWidth(true); // DO NOT set key to "asin"
 
 
-        productGrid.addColumn(Product::getTitle).setHeader("Title").setAutoWidth(true);
-        productGrid.addColumn(Product::getNewprice).setHeader("New Price").setAutoWidth(true);
-        productGrid.addColumn(Product::getUsedprice).setHeader("Used Price").setAutoWidth(true);
-        productGrid.addColumn(Product::getSavingspercent).setHeader("Savings %").setAutoWidth(true);
+        productGrid.addComponentColumn(product -> {
+            com.vaadin.flow.component.html.Span titleSpan = new com.vaadin.flow.component.html.Span(product.getTitle());
+            titleSpan.getStyle().set("white-space", "normal");
+            titleSpan.getStyle().set("word-wrap", "break-word");
+            return titleSpan;
+        }).setHeader("Title").setAutoWidth(true);
 
+
+//        productGrid.addColumn(Product::getNewprice).setHeader("New Price").setAutoWidth(true);
+
+        productGrid.addColumn(product -> {
+            Double newPrice = product.getNewprice()
+                    != null ? Double.parseDouble(product.getNewprice()) / 100 : null;
+
+            return newPrice != null ? String.format("%.2f", newPrice) : "N/A";
+        }).setHeader("New Price").setAutoWidth(true);
+
+//        productGrid.addColumn(Product::getUsedprice).setHeader("Used Price").setAutoWidth(true);
+
+        productGrid.addColumn(product -> {
+            Double usedPrice = product.getUsedprice() != null ? Double.parseDouble(product.getUsedprice()) / 100 : null;
+            return usedPrice != null ? String.format("%.2f", usedPrice) : "N/A";
+        }).setHeader("Used Price").setAutoWidth(true);
+
+
+//        productGrid.addColumn(Product::getSavingspercent).setHeader("Savings %").setAutoWidth(true);
+
+
+        productGrid.addColumn(product -> {
+            Double savingsPercent = product.getSavingspercent() != null ? Double.parseDouble(product.getSavingspercent()) / 100 : null;
+            return savingsPercent != null ? String.format("%.2f", savingsPercent) : "N/A";
+        }).setHeader("Savings %").setAutoWidth(true);
 
         productGrid.addComponentColumn(product -> {
             if (product.getProcessedImage() != null) {
