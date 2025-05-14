@@ -3,11 +3,13 @@ package com.oasys.dealforage.view;
 import com.oasys.dealforage.entity.Product;
 import com.oasys.dealforage.service.ProductService;
 import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -395,6 +397,7 @@ private HorizontalLayout createFilterLayout() {
         System.out.println("Search Text: " + searchText);
         // Add logic to handle search text
     });
+    searchTextField.addKeyPressListener(Key.ENTER, e -> searchProducts());
 
 
 
@@ -521,6 +524,7 @@ private HorizontalLayout createFilterLayout() {
             return link;
         }).setHeader("ASIN").setAutoWidth(true); // DO NOT set key to "asin"
 
+/*
 
         productGrid.addComponentColumn(product -> {
             com.vaadin.flow.component.html.Span titleSpan = new com.vaadin.flow.component.html.Span(product.getTitle());
@@ -529,8 +533,17 @@ private HorizontalLayout createFilterLayout() {
             return titleSpan;
         }).setHeader("Title").setAutoWidth(true);
 
+*/
 
-//        productGrid.addColumn(Product::getNewprice).setHeader("New Price").setAutoWidth(true);
+        productGrid.addComponentColumn(product -> {
+            Span titleSpan = new Span(product.getTitle());
+            titleSpan.getStyle().set("max-width", "500px");
+            titleSpan.getStyle().set("overflow-wrap", "break-word");
+            titleSpan.getStyle().set("white-space", "normal");
+            titleSpan.getStyle().set("display", "block");
+            return titleSpan;
+        }).setHeader("Title").setFlexGrow(1);
+
 
         productGrid.addColumn(product -> {
             Double newPrice = product.getNewprice()
@@ -646,17 +659,35 @@ private HorizontalLayout createFilterLayout() {
         try {
             StringWriter writer = new StringWriter();
             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                    .withHeader("ASIN", "Title", "New Price", "Used Price", "Savings Percent", "Deal Score", "Last Updated"));
+                    .withHeader("ASIN", "Title", "New Price", "Used Price", "Savings Percent", "Deal Score", "Last Updated", "Image URL"));
 
             for (Product product : selectedProducts) {
+
+                Double newPrice = product.getNewprice()
+                        != null ? Double.parseDouble(product.getNewprice()) / 100 : null;
+
+                Double usedPrice = product.getUsedprice()
+                        != null ? Double.parseDouble(product.getUsedprice()) / 100 : null;
+
+                Double savingPercent = product.getSavingspercent()
+                        != null ? Double.parseDouble(product.getSavingspercent()) / 100 : null;
+
+                String imageName = new String(product.getImage(), StandardCharsets.UTF_8);
+                if (imageName != null && imageName.length() > 0) {
+                    imageName = imageName.replaceAll("SL100", "SL500");
+                    imageName = "https://c.media-amazon.com/images/I/" + imageName;
+                }
+
                 csvPrinter.printRecord(
                         product.getAsin(),
                         product.getTitle(),
-                        product.getNewprice(),
-                        product.getUsedprice(),
-                        product.getSavingspercent(),
+
+                        newPrice != null ? String.format("%.2f", newPrice) : "N/A",
+                        usedPrice != null ? String.format("%.2f", usedPrice) : "N/A",
+                        savingPercent != null ? String.format("%.2f", savingPercent) : "N/A",
                         product.getDealscore(),
-                        product.getUpdated_at()
+                        product.getUpdated_at(),
+                        imageName != null ? imageName : "N/A"
                 );
             }
 
