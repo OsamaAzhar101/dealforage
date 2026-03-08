@@ -1,0 +1,16 @@
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render app
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            "https://dealforage-application.onrender.com/"
+
