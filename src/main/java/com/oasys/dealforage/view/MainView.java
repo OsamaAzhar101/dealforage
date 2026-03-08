@@ -7,7 +7,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
-
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -34,7 +34,7 @@ public class MainView extends VerticalLayout {
 
     private static final Map<String, Integer> CATEGORY_INDEX = new HashMap<>();
     private static final Map<String, Integer> SORT_BY_INDEX = new LinkedHashMap<>();
-
+    private static final String SOURCE_URL = "https://dealforager.com/api/products";
 
     static {
         CATEGORY_INDEX.put("All", 0);
@@ -370,67 +370,78 @@ public class MainView extends VerticalLayout {
         setSizeFull();
         getElement().getStyle().set("zoom", "70%"); // Set zoom level to 70%
         configureGrid();
-        add(createFilterLayout(), productGrid, createButtonLayout());
+        add(createSourceUrlLayout(), createFilterLayout(), productGrid, createButtonLayout());
         loadInitialData();
     }
 
+    private HorizontalLayout createSourceUrlLayout() {
+        Span label = new Span("Extracted data from : ");
+        Anchor sourceLink = new Anchor(SOURCE_URL, SOURCE_URL);
+        sourceLink.setTarget("_blank");
 
-private HorizontalLayout createFilterLayout() {
-    categoryFilter.setItems(CATEGORY_INDEX.keySet());
-    categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
-    categoryFilter.setWidth("150px");
+        HorizontalLayout sourceLayout = new HorizontalLayout(label, sourceLink);
+        sourceLayout.setWidthFull();
+        sourceLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        sourceLayout.setAlignItems(Alignment.CENTER);
+        return sourceLayout;
+    }
 
-    sortByFilter.setItems(SORT_BY_INDEX.keySet());
-    sortByFilter.setPlaceholder("Select Sort By");
-    sortByFilter.setWidth("130px");
-    sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+    private HorizontalLayout createFilterLayout() {
+        categoryFilter.setItems(CATEGORY_INDEX.keySet());
+        categoryFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
+        categoryFilter.setWidth("150px");
 
-
-    // Create a search text bar
-
-    searchTextField.setPlaceholder("Enter search text");
-    searchTextField.setWidth("200px");
-    searchTextField.addValueChangeListener(event -> {
-        String searchText = event.getValue();
-        System.out.println("Search Text: " + searchText);
-        // Add logic to handle search text
-    });
-
-
-
-    // Add the estimated savings filter
-    HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
-    HorizontalLayout priceDifferenceFilter = createEstimatedPriceDifferenceFilter();
-    HorizontalLayout newPriceMin = createNewPriceMinFilter();
-    HorizontalLayout newPriceMax = createNewPriceMaxFilter();
-    HorizontalLayout usedPriceMax = createUsedPriceMaxFilter();
-    HorizontalLayout usedPriceMin = createUsedPriceMinFilter();
-
-    // Create a layout for filters and center align them
-    HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
-            savingsFilter, priceDifferenceFilter, newPriceMin,
-            newPriceMax, usedPriceMin, usedPriceMax, searchTextField);
-    filterLayout.setAlignItems(Alignment.CENTER);
+        sortByFilter.setItems(SORT_BY_INDEX.keySet());
+        sortByFilter.setPlaceholder("Select Sort By");
+        sortByFilter.setWidth("130px");
+        sortByFilter.addClassNames(LumoUtility.Background.BASE, LumoUtility.TextColor.PRIMARY);
 
 
-    filterLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-    filterLayout.setWidthFull();
+        // Create a search text bar
+
+        searchTextField.setPlaceholder("Enter search text");
+        searchTextField.setWidth("200px");
+        searchTextField.addValueChangeListener(event -> {
+            String searchText = event.getValue();
+            System.out.println("Search Text: " + searchText);
+            // Add logic to handle search text
+        });
 
 
 
-    // Create a separate layout for the search button and center align it
-    Button searchButton = new Button("Search", e -> searchProducts());
-    HorizontalLayout searchButtonLayout = new HorizontalLayout(searchButton);
-    searchButtonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-    searchButtonLayout.setWidthFull();
+        // Add the estimated savings filter
+        HorizontalLayout savingsFilter = createEstimatedSavingsFilter();
+        HorizontalLayout priceDifferenceFilter = createEstimatedPriceDifferenceFilter();
+        HorizontalLayout newPriceMin = createNewPriceMinFilter();
+        HorizontalLayout newPriceMax = createNewPriceMaxFilter();
+        HorizontalLayout usedPriceMax = createUsedPriceMaxFilter();
+        HorizontalLayout usedPriceMin = createUsedPriceMinFilter();
 
-    // Combine both layouts
-    VerticalLayout combinedLayout = new VerticalLayout(filterLayout, searchButtonLayout);
-    combinedLayout.setAlignItems(Alignment.CENTER);
-    combinedLayout.setWidthFull();
-    combinedLayout.getStyle().set("margin-left", "100px");
+        // Create a layout for filters and center align them
+        HorizontalLayout filterLayout = new HorizontalLayout(categoryFilter, sortByFilter,
+                savingsFilter, priceDifferenceFilter, newPriceMin,
+                newPriceMax, usedPriceMin, usedPriceMax, searchTextField);
+        filterLayout.setAlignItems(Alignment.CENTER);
 
-    return new HorizontalLayout(combinedLayout);
+
+        filterLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        filterLayout.setWidthFull();
+
+
+
+        // Create a separate layout for the search button and center align it
+        Button searchButton = new Button("Search", e -> searchProducts());
+        HorizontalLayout searchButtonLayout = new HorizontalLayout(searchButton);
+        searchButtonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        searchButtonLayout.setWidthFull();
+
+        // Combine both layouts
+        VerticalLayout combinedLayout = new VerticalLayout(filterLayout, searchButtonLayout);
+        combinedLayout.setAlignItems(Alignment.CENTER);
+        combinedLayout.setWidthFull();
+        combinedLayout.getStyle().set("margin-left", "100px");
+
+        return new HorizontalLayout(combinedLayout);
 }
 
 /*
