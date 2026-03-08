@@ -1,16 +1,13 @@
-name: keep-alive
+name: Keep Alive
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
-  workflow_dispatch:
+    - cron: "*/10 * * * *"
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render app
+      - name: Ping Render backend health endpoint
         run: |
-          curl --fail --silent --show-error --max-time 30 \
-            "https://dealforage-application.onrender.com/"
-
+          curl -fsS https://https-dealforage-application-onrender-com.onrender.com/ || echo "Backend not responding"
