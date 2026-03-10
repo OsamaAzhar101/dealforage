@@ -55,5 +55,10 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger Render redeploy
-        if: secrets.RENDER_DEPLOY_HOOK != ''
-        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        continue-on-error: true
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
+          fi
